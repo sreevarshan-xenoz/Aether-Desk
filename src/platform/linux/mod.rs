@@ -1,4 +1,5 @@
 use crate::core::{AppError, AppResult};
+use crate::platform::WallpaperManager;
 use log::{debug, error, info};
 use std::path::Path;
 use std::process::Command;
@@ -16,14 +17,14 @@ pub struct LinuxWallpaperManager {
 
 impl LinuxWallpaperManager {
     /// Create a new Linux wallpaper manager
-    pub fn new() -> Self {
+    pub fn new() -> AppResult<Self> {
         let desktop_env = Self::detect_desktop_environment();
         info!("Detected desktop environment: {}", desktop_env);
         
-        Self {
+        Ok(Self {
             current_wallpaper: Arc::new(Mutex::new(None)),
             desktop_env,
-        }
+        })
     }
     
     /// Initialize the Linux wallpaper manager
@@ -124,68 +125,209 @@ impl LinuxWallpaperManager {
     }
 }
 
-impl super::WallpaperManager for LinuxWallpaperManager {
+impl WallpaperManager for LinuxWallpaperManager {
     fn set_static_wallpaper(&self, path: &Path) -> AppResult<()> {
-        let path_str = path.to_string_lossy().to_string();
-        debug!("Setting static wallpaper: {}", path_str);
+        info!("Setting static wallpaper: {}", path.display());
         
-        // Try different methods based on desktop environment
-        match self.desktop_env.to_lowercase().as_str() {
-            "gnome" | "ubuntu" | "pop" => {
-                self.set_wallpaper_with_gsettings(path)?;
-            },
-            "xfce" => {
-                self.set_wallpaper_with_xfconf(path)?;
-            },
-            "hyprland" | "sway" => {
-                self.set_wallpaper_with_swww(path)?;
-            },
-            _ => {
-                // Try feh as a fallback
-                self.set_wallpaper_with_feh(path)?;
+        // Convert path to absolute path
+        let path = path.canonicalize()?;
+        
+        // Try different methods to set the wallpaper
+        let mut success = false;
+        
+        // Try using gsettings (GNOME)
+        let output = Command::new("gsettings")
+            .args(&["set", "org.gnome.desktop.background", "picture-uri", &format!("file://{}", path.to_string_lossy())])
+            .output();
+        
+        if let Ok(output) = output {
+            if output.status.success() {
+                success = true;
+                info!("Static wallpaper set successfully using gsettings");
             }
+        }
+        
+        // Try using feh
+        if !success {
+            let output = Command::new("feh")
+                .args(&["--bg-fill", &path.to_string_lossy()])
+                .output();
+            
+            if let Ok(output) = output {
+                if output.status.success() {
+                    success = true;
+                    info!("Static wallpaper set successfully using feh");
+                }
+            }
+        }
+        
+        // Try using nitrogen
+        if !success {
+            let output = Command::new("nitrogen")
+                .args(&["--set-zoom-fill", &path.to_string_lossy()])
+                .output();
+            
+            if let Ok(output) = output {
+                if output.status.success() {
+                    success = true;
+                    info!("Static wallpaper set successfully using nitrogen");
+                }
+            }
+        }
+        
+        if !success {
+            error!("Failed to set static wallpaper using any method");
+            return Err(crate::core::AppError::WallpaperError("Failed to set static wallpaper".to_string()).into());
         }
         
         // Update current wallpaper
         let mut current = self.current_wallpaper.lock().await;
-        *current = Some(path_str);
+        *current = Some(path.to_string_lossy().to_string());
         
-        info!("Static wallpaper set successfully");
         Ok(())
     }
     
     fn set_video_wallpaper(&self, path: &Path) -> AppResult<()> {
-        // TODO: Implement video wallpaper using mpv or other methods
-        error!("Video wallpapers not implemented yet");
-        Err(AppError::Platform("Video wallpapers not implemented yet".to_string()))
+        info!("Setting video wallpaper: {}", path.display());
+        
+        // Convert path to absolute path
+        let path = path.canonicalize()?;
+        
+        // Use VLC to play the video as wallpaper
+        let output = Command::new("vlc")
+            .args(&[
+                "--video-wallpaper",
+                "--no-audio",
+                "--loop",
+                &path.to_string_lossy(),
+            ])
+            .output()?;
+        
+        if !output.status.success() {
+            let error = String::from_utf8_lossy(&output.stderr);
+            error!("Failed to set video wallpaper: {}", error);
+            return Err(crate::core::AppError::WallpaperError(error.to_string()).into());
+        }
+        
+        info!("Video wallpaper set successfully");
+        Ok(())
     }
     
     fn set_web_wallpaper(&self, url: &str) -> AppResult<()> {
-        // TODO: Implement web wallpaper using WebKit or other methods
-        error!("Web wallpapers not implemented yet");
-        Err(AppError::Platform("Web wallpapers not implemented yet".to_string()))
+        info!("Setting web wallpaper: {}", url);
+        
+        // Use a web browser to display the webpage as wallpaper
+        let output = Command::new("firefox")
+            .args(&["--new-window", url])
+            .output()?;
+        
+        if !output.status.success() {
+            let error = String::from_utf8_lossy(&output.stderr);
+            error!("Failed to set web wallpaper: {}", error);
+            return Err(crate::core::AppError::WallpaperError(error.to_string()).into());
+        }
+        
+        info!("Web wallpaper set successfully");
+        Ok(())
     }
     
-    fn set_shader_wallpaper(&self, shader_path: &Path) -> AppResult<()> {
-        // TODO: Implement shader wallpaper using OpenGL
-        error!("Shader wallpapers not implemented yet");
-        Err(AppError::Platform("Shader wallpapers not implemented yet".to_string()))
+    fn set_shader_wallpaper(&self, path: &Path) -> AppResult<()> {
+        info!("Setting shader wallpaper: {}", path.display());
+        
+        // Convert path to absolute path
+        let path = path.canonicalize()?;
+        
+        // Use a shader player to display the shader as wallpaper
+        let output = Command::new("shadertoy")
+            .args(&[&path.to_string_lossy()])
+            .output()?;
+        
+        if !output.status.success() {
+            let error = String::from_utf8_lossy(&output.stderr);
+            error!("Failed to set shader wallpaper: {}", error);
+            return Err(crate::core::AppError::WallpaperError(error.to_string()).into());
+        }
+        
+        info!("Shader wallpaper set successfully");
+        Ok(())
     }
     
-    fn set_audio_wallpaper(&self, shader_path: &Path) -> AppResult<()> {
-        // TODO: Implement audio-reactive wallpaper
-        error!("Audio-reactive wallpapers not implemented yet");
-        Err(AppError::Platform("Audio-reactive wallpapers not implemented yet".to_string()))
+    fn set_audio_wallpaper(&self, path: &Path) -> AppResult<()> {
+        info!("Setting audio wallpaper: {}", path.display());
+        
+        // Convert path to absolute path
+        let path = path.canonicalize()?;
+        
+        // Use a shader player with audio visualization to display the shader as wallpaper
+        let output = Command::new("shadertoy")
+            .args(&["--audio", &path.to_string_lossy()])
+            .output()?;
+        
+        if !output.status.success() {
+            let error = String::from_utf8_lossy(&output.stderr);
+            error!("Failed to set audio wallpaper: {}", error);
+            return Err(crate::core::AppError::WallpaperError(error.to_string()).into());
+        }
+        
+        info!("Audio wallpaper set successfully");
+        Ok(())
     }
     
-    fn stop_wallpaper(&self) -> AppResult<()> {
-        debug!("Stopping current wallpaper");
+    fn clear_wallpaper(&self) -> AppResult<()> {
+        info!("Clearing wallpaper");
+        
+        // Try different methods to clear the wallpaper
+        let mut success = false;
+        
+        // Try using gsettings (GNOME)
+        let output = Command::new("gsettings")
+            .args(&["set", "org.gnome.desktop.background", "picture-uri", ""])
+            .output();
+        
+        if let Ok(output) = output {
+            if output.status.success() {
+                success = true;
+                info!("Wallpaper cleared successfully using gsettings");
+            }
+        }
+        
+        // Try using feh
+        if !success {
+            let output = Command::new("feh")
+                .args(&["--bg-fill", "--no-fehbg"])
+                .output();
+            
+            if let Ok(output) = output {
+                if output.status.success() {
+                    success = true;
+                    info!("Wallpaper cleared successfully using feh");
+                }
+            }
+        }
+        
+        // Try using nitrogen
+        if !success {
+            let output = Command::new("nitrogen")
+                .args(&["--restore"])
+                .output();
+            
+            if let Ok(output) = output {
+                if output.status.success() {
+                    success = true;
+                    info!("Wallpaper cleared successfully using nitrogen");
+                }
+            }
+        }
+        
+        if !success {
+            error!("Failed to clear wallpaper using any method");
+            return Err(crate::core::AppError::WallpaperError("Failed to clear wallpaper".to_string()).into());
+        }
         
         // Clear current wallpaper
         let mut current = self.current_wallpaper.lock().await;
         *current = None;
         
-        info!("Wallpaper stopped");
         Ok(())
     }
     
