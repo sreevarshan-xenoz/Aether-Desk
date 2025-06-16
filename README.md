@@ -6,9 +6,11 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Rust Version](https://img.shields.io/badge/Rust-1.70+-blue.svg)](https://www.rust-lang.org)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-blue)](https://github.com/yourusername/aether-desk)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-blue)](https://github.com/sreevarshan-xenoz/aether-desk)
 
 *A modern wallpaper engine for Windows and Linux, written in Rust*
+
+<img src="https://media.giphy.com/media/3o7TKqnN349PBUtGFO/giphy.gif" width="300" alt="Anime Aesthetic">
 
 </div>
 
@@ -40,17 +42,22 @@
   - Custom wallpaper types
   - API for external control
 
+- 🌸 **Anime Mode**
+  - Specialized settings for anime wallpapers
+  - Synced audio visualization with anime music
+  - Seasonal anime themes
+
 ## 📥 Installation
 
 ### Windows
 
-1. Download the latest release from the [Releases](https://github.com/yourusername/aether-desk/releases) page
+1. Download the latest release from the [Releases](https://github.com/sreevarshan-xenoz/aether-desk/releases) page
 2. Extract the ZIP file to a location of your choice
 3. Run `aether-desk.exe`
 
 ### Linux
 
-1. Download the latest release from the [Releases](https://github.com/yourusername/aether-desk/releases) page
+1. Download the latest release from the [Releases](https://github.com/sreevarshan-xenoz/aether-desk/releases) page
 2. Extract the TAR.GZ file to a location of your choice
 3. Run `./aether-desk`
 
@@ -66,7 +73,7 @@
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/aether-desk.git
+   git clone https://github.com/sreevarshan-xenoz/aether-desk.git
    cd aether-desk
    ```
 
@@ -128,6 +135,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <div align="center">
+<img src="https://media.giphy.com/media/3o7TKqnN349PBUtGFO/giphy.gif" width="150" alt="Anime Aesthetic">
+
 Made with ❤️ by [Sree Varshan V](https://github.com/sreevarshan-xenoz)
 </div>
 
