@@ -10,8 +10,6 @@
 
 *A modern wallpaper engine for Windows and Linux, written in Rust*
 
-<img src="https://media.giphy.com/media/3o7TKqnN349PBUtGFO/giphy.gif" width="300" alt="Anime Aesthetic">
-
 </div>
 
 ## ✨ Features
@@ -41,11 +39,6 @@
   - Plugin system (coming soon)
   - Custom wallpaper types
   - API for external control
-
-- 🌸 **Anime Mode**
-  - Specialized settings for anime wallpapers
-  - Synced audio visualization with anime music
-  - Seasonal anime themes
 
 ## 📥 Installation
 
@@ -135,8 +128,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <div align="center">
-<img src="https://media.giphy.com/media/3o7TKqnN349PBUtGFO/giphy.gif" width="150" alt="Anime Aesthetic">
-
 Made with ❤️ by [Sree Varshan V](https://github.com/sreevarshan-xenoz)
 </div>
 
