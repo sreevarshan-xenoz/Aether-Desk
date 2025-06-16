@@ -8,56 +8,51 @@ mod ui;
 use anyhow::Result;
 use log::{error, info};
 use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem};
+use aether_desk::core::{AppResult, Config};
+use aether_desk::platform::{self, WallpaperManager};
+use aether_desk::ui::AetherDeskApp;
+use eframe::{egui, epi};
+use std::sync::Arc;
 
-fn main() -> Result<()> {
-    // Initialize logging
-    env_logger::init();
-    info!("Starting Aether-Desk...");
+/// Main application
+struct AetherDesk {
+    /// Application UI
+    app: AetherDeskApp,
+}
 
-    // Create system tray menu
-    let quit = CustomMenuItem::new("quit".to_string(), "Quit");
-    let settings = CustomMenuItem::new("settings".to_string(), "Settings");
-    let tray_menu = SystemTrayMenu::new()
-        .add_item(settings)
-        .add_native_item(SystemTrayMenuItem::Separator)
-        .add_item(quit);
+impl epi::App for AetherDesk {
+    fn name(&self) -> &str {
+        "Aether-Desk"
+    }
     
-    let system_tray = SystemTray::new().with_menu(tray_menu);
+    fn update(&mut self, ctx: &egui::CtxRef, _frame: &epi::Frame) {
+        self.app.show(ctx);
+    }
+}
 
-    // Build and run the application
-    tauri::Builder::default()
-        .system_tray(system_tray)
-        .on_system_tray_event(|app, event| match event {
-            SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
-                "quit" => {
-                    info!("Quitting application...");
-                    app.exit(0);
-                }
-                "settings" => {
-                    info!("Opening settings...");
-                    // TODO: Open settings window
-                }
-                _ => {}
-            },
-            _ => {}
-        })
-        .setup(|app| {
-            info!("Application setup...");
-            
-            // Initialize platform-specific wallpaper manager
-            #[cfg(target_os = "windows")]
-            platform::windows::init()?;
-            
-            #[cfg(target_os = "linux")]
-            platform::linux::init()?;
-            
-            Ok(())
-        })
-        .invoke_handler(tauri::generate_handler![
-            // Add command handlers here
-        ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
-
+fn main() -> AppResult<()> {
+    // Initialize logger
+    env_logger::init();
+    info!("Starting Aether-Desk");
+    
+    // Create platform-specific wallpaper manager
+    let wallpaper_manager = platform::create_wallpaper_manager()?;
+    
+    // Create application
+    let app = AetherDeskApp::new(wallpaper_manager);
+    
+    // Run application
+    let app = AetherDesk { app };
+    let native_options = eframe::NativeOptions {
+        initial_window_size: Some(egui::vec2(800.0, 600.0)),
+        ..Default::default()
+    };
+    
+    if let Err(e) = eframe::run_native(Box::new(app), native_options) {
+        error!("Application error: {}", e);
+        return Err(e.into());
+    }
+    
+    info!("Aether-Desk stopped");
     Ok(())
 } 
