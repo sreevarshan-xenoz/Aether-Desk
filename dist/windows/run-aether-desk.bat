@@ -1,0 +1,3 @@
+@echo off
+echo Starting Aether-Desk...
+start "" "%~dp0aether-desk.exe" 
