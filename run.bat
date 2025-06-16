@@ -1,0 +1,3 @@
+@echo off
+echo Starting Aether-Desk...
+start "" "%~dp0target\release\aether-desk.exe" 

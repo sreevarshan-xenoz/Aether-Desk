@@ -80,6 +80,25 @@
    cargo run --release
    ```
 
+### Building Windows Executable
+
+To build a Windows executable (.exe) file:
+
+1. Make sure you have Rust and Cargo installed
+2. Run the build script:
+   ```bash
+   .\build_windows.bat
+   ```
+   This will create a Windows executable in the `dist\windows` directory.
+
+3. (Optional) To create a Windows installer:
+   - Install [NSIS](https://nsis.sourceforge.io/Download) (Nullsoft Scriptable Install System)
+   - Run the following command:
+     ```bash
+     makensis installer.nsi
+     ```
+   This will create an installer file named `Aether-Desk-Setup.exe` in the project root.
+
 ## 🚀 Usage
 
 1. Launch the application
