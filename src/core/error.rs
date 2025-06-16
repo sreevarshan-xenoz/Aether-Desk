@@ -1,27 +1,35 @@
 use thiserror::Error;
 
-/// Application error type
+/// Application error
 #[derive(Error, Debug)]
 pub enum AppError {
-    /// IO error
-    #[error("IO error: {0}")]
-    Io(#[from] std::io::Error),
-    
     /// Configuration error
     #[error("Configuration error: {0}")]
-    Config(String),
+    ConfigError(String),
+    
+    /// Platform error
+    #[error("Platform error: {0}")]
+    PlatformError(String),
     
     /// Wallpaper error
     #[error("Wallpaper error: {0}")]
-    Wallpaper(String),
-    
-    /// Platform-specific error
-    #[error("Platform error: {0}")]
-    Platform(String),
+    WallpaperError(String),
     
     /// Plugin error
     #[error("Plugin error: {0}")]
-    Plugin(String),
+    PluginError(String),
+    
+    /// IO error
+    #[error("IO error: {0}")]
+    IoError(#[from] std::io::Error),
+    
+    /// Serialization error
+    #[error("Serialization error: {0}")]
+    SerializationError(#[from] serde_json::Error),
+    
+    /// Unsupported platform
+    #[error("Unsupported platform")]
+    UnsupportedPlatform,
     
     /// Other error
     #[error("Other error: {0}")]
