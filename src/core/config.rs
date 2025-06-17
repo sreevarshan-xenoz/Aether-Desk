@@ -142,6 +142,18 @@ impl Config {
         config_dir
     }
     
+    /// Get the widgets file path
+    pub fn get_widgets_file(&self) -> PathBuf {
+        let mut config_dir = Self::get_config_dir().unwrap_or_else(|_| {
+            let mut dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+            dir.push("config");
+            dir
+        });
+        
+        config_dir.push("widgets.json");
+        config_dir
+    }
+    
     /// Load configuration from file
     pub fn load() -> Result<Self> {
         let config_path = Self::get_config_path()?;
