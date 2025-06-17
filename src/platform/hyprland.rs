@@ -12,15 +12,24 @@ impl WallpaperManager for HyprlandWallpaperManager {
         // Convert path to string
         let path_str = path.to_string_lossy().to_string();
         
-        // Use hyprctl to set the wallpaper
-        let output = Command::new("hyprctl")
-            .args(&["hyprpaper", "wallpaper", "eDP-1,", &path_str])
-            .output()
-            .map_err(|e| format!("Failed to execute hyprctl: {}", e))?;
+        // Get list of monitors
+        let monitors = self.get_monitors()?;
         
-        if !output.status.success() {
-            let error = String::from_utf8_lossy(&output.stderr);
-            return Err(format!("Failed to set wallpaper: {}", error).into());
+        if monitors.is_empty() {
+            return Err("No monitors detected".into());
+        }
+        
+        // Set wallpaper for each monitor
+        for monitor in monitors {
+            let output = Command::new("hyprctl")
+                .args(&["hyprpaper", "wallpaper", &format!("{},", monitor), &path_str])
+                .output()
+                .map_err(|e| format!("Failed to execute hyprctl: {}", e))?;
+            
+            if !output.status.success() {
+                let error = String::from_utf8_lossy(&output.stderr);
+                return Err(format!("Failed to set wallpaper for monitor {}: {}", monitor, error).into());
+            }
         }
         
         Ok(())
@@ -59,6 +68,40 @@ impl WallpaperManager for HyprlandWallpaperManager {
         }
         
         Ok(())
+    }
+}
+
+impl HyprlandWallpaperManager {
+    /// Get a list of available monitors
+    fn get_monitors(&self) -> AppResult<Vec<String>> {
+        let output = Command::new("hyprctl")
+            .args(&["monitors"])
+            .output()
+            .map_err(|e| format!("Failed to execute hyprctl: {}", e))?;
+        
+        if !output.status.success() {
+            let error = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("Failed to get monitors: {}", error).into());
+        }
+        
+        let output_str = String::from_utf8_lossy(&output.stdout);
+        let mut monitors = Vec::new();
+        
+        // Parse the output to extract monitor names
+        for line in output_str.lines() {
+            if line.contains("Monitor") && line.contains("(") {
+                // Extract monitor name from line like "Monitor eDP-1 (ID 0): 1920x1080 @ 60.000000 Hz"
+                if let Some(start) = line.find("Monitor ") {
+                    let start = start + 8; // Skip "Monitor "
+                    if let Some(end) = line[start..].find(" ") {
+                        let monitor_name = line[start..start+end].to_string();
+                        monitors.push(monitor_name);
+                    }
+                }
+            }
+        }
+        
+        Ok(monitors)
     }
 }
 
