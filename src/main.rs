@@ -8,7 +8,7 @@ mod ui;
 use anyhow::Result;
 use log::{error, info};
 use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem};
-use aether_desk::core::{AppResult, Config};
+use aether_desk::core::{AppResult, Config, WidgetManager};
 use aether_desk::platform::{self, WallpaperManager};
 use aether_desk::ui::AetherDeskApp;
 use eframe::{egui, epi};
@@ -30,26 +30,29 @@ impl epi::App for AetherDesk {
     }
 }
 
-fn main() -> AppResult<()> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize logger
     env_logger::init();
     info!("Starting Aether-Desk");
     
-    // Create platform-specific wallpaper manager
+    // Create wallpaper manager
     let wallpaper_manager = platform::create_wallpaper_manager()?;
+    let wallpaper_manager = Arc::new(wallpaper_manager);
     
-    // Create application
+    // Create application UI
     let app = AetherDeskApp::new(wallpaper_manager);
     
-    // Run application
+    // Create application
     let app = AetherDesk { app };
-    let native_options = eframe::NativeOptions {
+    
+    // Run application
+    let options = eframe::NativeOptions {
         initial_window_size: Some(egui::vec2(800.0, 600.0)),
         ..Default::default()
     };
     
-    if let Err(e) = eframe::run_native(Box::new(app), native_options) {
-        error!("Application error: {}", e);
+    if let Err(e) = eframe::run_native(Box::new(app), options) {
+        error!("Failed to run application: {}", e);
         return Err(e.into());
     }
     

@@ -46,19 +46,25 @@
   - Create custom triggers for wallpaper changes
   - Enable/disable individual schedule items
 
+- 📋 **Widget System**
+  - Display useful information on your desktop with customizable widgets
+
 ## 📥 Installation
 
 ### Windows
 
 1. Download the latest release from the [Releases](https://github.com/sreevarshan-xenoz/aether-desk/releases) page
-2. Extract the ZIP file to a location of your choice
-3. Run `aether-desk.exe`
+2. Run the installer and follow the instructions
+
+### macOS
+
+1. Download the latest release from the [Releases](https://github.com/sreevarshan-xenoz/aether-desk/releases) page
+2. Open the .dmg file and drag the application to your Applications folder
 
 ### Linux
 
 1. Download the latest release from the [Releases](https://github.com/sreevarshan-xenoz/aether-desk/releases) page
-2. Extract the TAR.GZ file to a location of your choice
-3. Run `./aether-desk`
+2. Extract the archive and run the application
 
 ## 🛠️ Building from Source
 
@@ -66,44 +72,49 @@
 
 - Rust (latest stable version)
 - Cargo (comes with Rust)
-- Git
+- Platform-specific dependencies (see below)
 
-### Steps
+### Windows
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/sreevarshan-xenoz/aether-desk.git
-   cd aether-desk
-   ```
+```powershell
+# Clone the repository
+git clone https://github.com/sreevarshan-xenoz/aether-desk.git
+cd aether-desk
 
-2. Build the project:
-   ```bash
-   cargo build --release
-   ```
+# Build the application
+cargo build --release
 
-3. Run the application:
-   ```bash
-   cargo run --release
-   ```
+# Run the application
+cargo run --release
+```
 
-### Building Windows Executable
+### macOS
 
-To build a Windows executable (.exe) file:
+```bash
+# Clone the repository
+git clone https://github.com/sreevarshan-xenoz/aether-desk.git
+cd aether-desk
 
-1. Make sure you have Rust and Cargo installed
-2. Run the build script:
-   ```bash
-   .\build_windows.bat
-   ```
-   This will create a Windows executable in the `dist\windows` directory.
+# Build the application
+cargo build --release
 
-3. (Optional) To create a Windows installer:
-   - Install [NSIS](https://nsis.sourceforge.io/Download) (Nullsoft Scriptable Install System)
-   - Run the following command:
-     ```bash
-     makensis installer.nsi
-     ```
-   This will create an installer file named `Aether-Desk-Setup.exe` in the project root.
+# Run the application
+cargo run --release
+```
+
+### Linux
+
+```bash
+# Clone the repository
+git clone https://github.com/sreevarshan-xenoz/aether-desk.git
+cd aether-desk
+
+# Build the application
+cargo build --release
+
+# Run the application
+cargo run --release
+```
 
 ## 🚀 Usage
 
@@ -132,6 +143,15 @@ To build a Windows executable (.exe) file:
 4. Select the wallpaper to display when the trigger activates
 5. Enable or disable the schedule item
 6. Click "Save" to add the schedule item
+
+### Using the Widget System
+
+1. Open Aether-Desk
+2. Select the "Widgets" tab
+3. Click "Add Widget"
+4. Choose a widget type (Clock, Weather, System Monitor, Calendar, Custom)
+5. Configure the widget position, size, and settings
+6. Click "Save" to add the widget
 
 ## 📋 Dependencies
 
