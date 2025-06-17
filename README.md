@@ -40,6 +40,12 @@
   - Custom wallpaper types
   - API for external control
 
+- ⏰ **Wallpaper Scheduler**
+  - Automatically change wallpapers based on time
+  - Set up intervals for wallpaper rotation
+  - Create custom triggers for wallpaper changes
+  - Enable/disable individual schedule items
+
 ## 📥 Installation
 
 ### Windows
@@ -113,6 +119,20 @@ To build a Windows executable (.exe) file:
 4. Click "Apply" to set the wallpaper
 5. Click "Stop" to clear the wallpaper
 
+### Using the Wallpaper Scheduler
+
+1. Click on the "Scheduler" tab
+2. Click "Add Schedule Item" to create a new schedule
+3. Configure the trigger type:
+   - **Time**: Set a specific time of day (e.g., 8:00 AM)
+   - **Interval**: Set a time interval (e.g., every 2 hours)
+   - **System Event**: Trigger on system events (e.g., startup)
+   - **Custom**: Create custom triggers
+
+4. Select the wallpaper to display when the trigger activates
+5. Enable or disable the schedule item
+6. Click "Save" to add the schedule item
+
 ## 📋 Dependencies
 
 | Wallpaper Type | Dependencies |
@@ -143,6 +163,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [rfd](https://github.com/PolyMeilex/rfd) for the file dialog
 - [serde](https://github.com/serde-rs/serde) for serialization
 - [log](https://github.com/rust-lang/log) for logging
+- [chrono](https://github.com/chronotope/chrono) for date and time handling
 
 ---
 
