@@ -3,29 +3,41 @@ name = "aether-desk"
 version = "0.1.0"
 edition = "2021"
 authors = ["Your Name <your.email@example.com>"]
-description = "A modern wallpaper engine for Windows and Linux"
+description = "A modern, cross-platform desktop wallpaper manager with advanced features"
+license = "MIT"
+repository = "https://github.com/yourusername/aether-desk"
+readme = "README.md"
+keywords = ["wallpaper", "desktop", "gui", "cross-platform"]
+categories = ["gui", "multimedia"]
 
 [dependencies]
-# Core dependencies
+# Core libraries
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 log = "0.4"
-env_logger = "0.10"
-thiserror = "1.0"
-anyhow = "1.0"
+env_logger = "0.9"
 chrono = { version = "0.4", features = ["serde"] }
 
-# UI dependencies
-eframe = "0.22.0"
-egui = "0.22.0"
-rfd = "0.11.0"
+# UI
+eframe = "0.19"
+egui = "0.19"
+rfd = "0.11"
 
-# Platform-specific dependencies
-#[cfg(target_os = "windows")]
-winapi = { version = "0.3", features = ["winuser"] }
+# Platform-specific
+winapi = { version = "0.3", features = ["winuser", "shellapi", "shlobj", "combaseapi", "objbase", "oleauto", "wtypesbase"] }
+tao = "0.20"
+winit = "0.28"
+raw-window-handle = "0.5"
+
+# Build
+tauri-build = { version = "1.2", features = [] }
 
 [build-dependencies]
-cc = "1.0"
+tauri-build = { version = "1.2", features = [] }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
 
 [profile.release]
 opt-level = 3
@@ -33,6 +45,11 @@ lto = true
 codegen-units = 1
 panic = "abort"
 strip = true
+
+[profile.release.package."*"]
+opt-level = 3
+lto = true
+codegen-units = 1
 
 [profile.dev]
 opt-level = 0
