@@ -13,6 +13,7 @@ log = "0.4"
 env_logger = "0.10"
 thiserror = "1.0"
 anyhow = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
 
 # UI dependencies
 eframe = "0.22.0"
