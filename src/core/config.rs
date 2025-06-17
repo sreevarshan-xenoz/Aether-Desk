@@ -130,6 +130,18 @@ impl Config {
         Ok(config_path)
     }
     
+    /// Get the schedule file path
+    pub fn get_schedule_file(&self) -> PathBuf {
+        let mut config_dir = Self::get_config_dir().unwrap_or_else(|_| {
+            let mut dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+            dir.push("config");
+            dir
+        });
+        
+        config_dir.push("schedule.json");
+        config_dir
+    }
+    
     /// Load configuration from file
     pub fn load() -> Result<Self> {
         let config_path = Self::get_config_path()?;
