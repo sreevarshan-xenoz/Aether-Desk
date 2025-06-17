@@ -1,5 +1,6 @@
 mod windows;
 mod linux;
+mod hyprland;
 
 use crate::core::AppResult;
 use std::sync::Arc;
@@ -34,7 +35,12 @@ pub fn create_wallpaper_manager() -> AppResult<Arc<dyn WallpaperManager + Send +
     
     #[cfg(target_os = "linux")]
     {
-        Ok(Arc::new(linux::LinuxWallpaperManager::new()?))
+        // Check if running on Hyprland
+        if hyprland::is_hyprland() {
+            Ok(hyprland::create_hyprland_wallpaper_manager())
+        } else {
+            Ok(Arc::new(linux::LinuxWallpaperManager::new()?))
+        }
     }
     
     #[cfg(not(any(target_os = "windows", target_os = "linux")))]
