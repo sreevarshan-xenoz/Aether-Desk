@@ -1,10 +1,11 @@
-use crate::core::{AppResult, Config, Plugin, PluginConfig, PluginManager, ScheduleItem, TriggerType, WallpaperScheduler, WallpaperType};
+use crate::core::{AppResult, Config, Plugin, PluginConfig, PluginManager, ScheduleItem, TriggerType, WallpaperScheduler, Widget, WidgetConfig, WidgetManager, WidgetPosition, WidgetSize, WidgetType, WallpaperType};
 use crate::platform::WallpaperManager;
 use crate::wallpapers::{AudioWallpaper, ShaderWallpaper, StaticWallpaper, VideoWallpaper, WebWallpaper, Wallpaper};
 use chrono::{NaiveTime, Timelike};
 use eframe::{egui, epi};
 use log::{debug, error, info};
 use rfd::FileDialog;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -21,6 +22,9 @@ pub struct AetherDeskApp {
     
     /// Wallpaper scheduler
     scheduler: WallpaperScheduler,
+    
+    /// Widget manager
+    widget_manager: WidgetManager,
     
     /// Current wallpaper
     current_wallpaper: Option<Box<dyn Wallpaper + Send + Sync>>,
@@ -42,6 +46,12 @@ pub struct AetherDeskApp {
     
     /// Editing schedule item index
     editing_schedule_index: Option<usize>,
+    
+    /// New widget
+    new_widget: Option<WidgetConfig>,
+    
+    /// Editing widget ID
+    editing_widget_id: Option<String>,
 }
 
 /// UI tab
@@ -52,6 +62,9 @@ enum Tab {
     
     /// Scheduler tab
     Scheduler,
+    
+    /// Widgets tab
+    Widgets,
     
     /// Plugins tab
     Plugins,
@@ -91,11 +104,25 @@ impl AetherDeskApp {
             error!("Failed to start scheduler: {}", e);
         }
         
+        // Create widget manager
+        let mut widget_manager = WidgetManager::new();
+        
+        // Load widgets
+        if let Err(e) = widget_manager.load_widgets(&config) {
+            error!("Failed to load widgets: {}", e);
+        }
+        
+        // Start widget manager
+        if let Err(e) = widget_manager.start() {
+            error!("Failed to start widget manager: {}", e);
+        }
+        
         Self {
             config,
             wallpaper_manager,
             plugin_manager,
             scheduler,
+            widget_manager,
             current_wallpaper: None,
             selected_wallpaper_type: WallpaperType::Static,
             selected_wallpaper_path: None,
@@ -103,6 +130,8 @@ impl AetherDeskApp {
             selected_tab: Tab::Wallpaper,
             new_schedule_item: None,
             editing_schedule_index: None,
+            new_widget: None,
+            editing_widget_id: None,
         }
     }
     
@@ -121,6 +150,10 @@ impl AetherDeskApp {
                     self.selected_tab = Tab::Scheduler;
                 }
                 
+                if ui.selectable_label(self.selected_tab == Tab::Widgets, "Widgets").clicked() {
+                    self.selected_tab = Tab::Widgets;
+                }
+                
                 if ui.selectable_label(self.selected_tab == Tab::Plugins, "Plugins").clicked() {
                     self.selected_tab = Tab::Plugins;
                 }
@@ -136,6 +169,7 @@ impl AetherDeskApp {
             match self.selected_tab {
                 Tab::Wallpaper => self.show_wallpaper_tab(ui),
                 Tab::Scheduler => self.show_scheduler_tab(ui),
+                Tab::Widgets => self.show_widgets_tab(ui),
                 Tab::Plugins => self.show_plugins_tab(ui),
                 Tab::Settings => self.show_settings_tab(ui),
             }
@@ -478,6 +512,222 @@ impl AetherDeskApp {
                 self.new_schedule_item = None;
                 self.editing_schedule_index = None;
             }
+        }
+    }
+    
+    /// Show widgets tab
+    fn show_widgets_tab(&mut self, ui: &mut egui::Ui) {
+        ui.heading("Widgets");
+        
+        // Widget list
+        let widget_configs = self.widget_manager.get_widget_configs();
+        
+        if widget_configs.is_empty() {
+            ui.label("No widgets installed. Add a new widget to display information on your desktop.");
+        } else {
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                for (id, config) in widget_configs.iter() {
+                    ui.horizontal(|ui| {
+                        // Enable/disable checkbox
+                        let mut enabled = config.enabled;
+                        if ui.checkbox(&mut enabled, "").changed() {
+                            let mut updated_config = config.clone();
+                            updated_config.enabled = enabled;
+                            if let Err(e) = self.widget_manager.update_widget(id, updated_config) {
+                                error!("Failed to update widget: {}", e);
+                            }
+                        }
+                        
+                        // Widget type
+                        ui.label(format!("{:?}", config.widget_type));
+                        
+                        // Widget position
+                        ui.label(format!("{:?}", config.position));
+                        
+                        // Widget size
+                        ui.label(format!("{:?}", config.size));
+                        
+                        // Edit button
+                        if ui.button("Edit").clicked() {
+                            self.editing_widget_id = Some(id.clone());
+                            self.new_widget = Some(config.clone());
+                        }
+                        
+                        // Delete button
+                        if ui.button("Delete").clicked() {
+                            if let Err(e) = self.widget_manager.remove_widget(id) {
+                                error!("Failed to remove widget: {}", e);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+        
+        ui.separator();
+        
+        // Add new widget
+        if ui.button("Add Widget").clicked() {
+            self.new_widget = Some(WidgetConfig {
+                widget_type: WidgetType::Clock,
+                position: WidgetPosition::TopRight,
+                size: WidgetSize::Medium,
+                settings: HashMap::new(),
+                enabled: true,
+            });
+            self.editing_widget_id = None;
+        }
+        
+        // Edit widget
+        if let Some(config) = &mut self.new_widget {
+            ui.separator();
+            ui.heading(if self.editing_widget_id.is_some() {
+                "Edit Widget"
+            } else {
+                "Add Widget"
+            });
+            
+            // Widget type
+            ui.horizontal(|ui| {
+                ui.label("Widget Type:");
+                egui::ComboBox::from_label("")
+                    .selected_text(format!("{:?}", config.widget_type))
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(&mut config.widget_type, WidgetType::Clock, "Clock");
+                        ui.selectable_value(&mut config.widget_type, WidgetType::Weather, "Weather");
+                        ui.selectable_value(&mut config.widget_type, WidgetType::SystemMonitor, "System Monitor");
+                        ui.selectable_value(&mut config.widget_type, WidgetType::Calendar, "Calendar");
+                        ui.selectable_value(&mut config.widget_type, WidgetType::Custom("custom".to_string()), "Custom");
+                    });
+            });
+            
+            // Widget position
+            ui.horizontal(|ui| {
+                ui.label("Position:");
+                egui::ComboBox::from_label("")
+                    .selected_text(format!("{:?}", config.position))
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(&mut config.position, WidgetPosition::TopLeft, "Top Left");
+                        ui.selectable_value(&mut config.position, WidgetPosition::TopRight, "Top Right");
+                        ui.selectable_value(&mut config.position, WidgetPosition::BottomLeft, "Bottom Left");
+                        ui.selectable_value(&mut config.position, WidgetPosition::BottomRight, "Bottom Right");
+                        ui.selectable_value(&mut config.position, WidgetPosition::Custom(0, 0), "Custom");
+                    });
+            });
+            
+            // Widget size
+            ui.horizontal(|ui| {
+                ui.label("Size:");
+                egui::ComboBox::from_label("")
+                    .selected_text(format!("{:?}", config.size))
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(&mut config.size, WidgetSize::Small, "Small");
+                        ui.selectable_value(&mut config.size, WidgetSize::Medium, "Medium");
+                        ui.selectable_value(&mut config.size, WidgetSize::Large, "Large");
+                        ui.selectable_value(&mut config.size, WidgetSize::Custom(100, 100), "Custom");
+                    });
+            });
+            
+            // Widget settings
+            ui.heading("Settings");
+            
+            match config.widget_type {
+                WidgetType::Clock => {
+                    ui.horizontal(|ui| {
+                        ui.label("Time Format:");
+                        let mut time_format = config.settings.get("time_format").unwrap_or(&"%H:%M:%S".to_string()).clone();
+                        if ui.text_edit_singleline(&mut time_format).changed() {
+                            config.settings.insert("time_format".to_string(), time_format);
+                        }
+                    });
+                    
+                    ui.horizontal(|ui| {
+                        ui.label("Date Format:");
+                        let mut date_format = config.settings.get("date_format").unwrap_or(&"%Y-%m-%d".to_string()).clone();
+                        if ui.text_edit_singleline(&mut date_format).changed() {
+                            config.settings.insert("date_format".to_string(), date_format);
+                        }
+                    });
+                },
+                WidgetType::Weather => {
+                    ui.horizontal(|ui| {
+                        ui.label("API Key:");
+                        let mut api_key = config.settings.get("api_key").unwrap_or(&"".to_string()).clone();
+                        if ui.text_edit_singleline(&mut api_key).changed() {
+                            config.settings.insert("api_key".to_string(), api_key);
+                        }
+                    });
+                    
+                    ui.horizontal(|ui| {
+                        ui.label("Location:");
+                        let mut location = config.settings.get("location").unwrap_or(&"".to_string()).clone();
+                        if ui.text_edit_singleline(&mut location).changed() {
+                            config.settings.insert("location".to_string(), location);
+                        }
+                    });
+                },
+                WidgetType::SystemMonitor => {
+                    ui.horizontal(|ui| {
+                        ui.label("Update Interval (seconds):");
+                        let mut interval = config.settings.get("interval").unwrap_or(&"1".to_string()).clone();
+                        if ui.text_edit_singleline(&mut interval).changed() {
+                            config.settings.insert("interval".to_string(), interval);
+                        }
+                    });
+                },
+                WidgetType::Calendar => {
+                    ui.horizontal(|ui| {
+                        ui.label("Show Week Numbers:");
+                        let mut show_week_numbers = config.settings.get("show_week_numbers").unwrap_or(&"false".to_string()).clone();
+                        if ui.checkbox(&mut (show_week_numbers == "true"), "").changed() {
+                            config.settings.insert("show_week_numbers".to_string(), show_week_numbers);
+                        }
+                    });
+                },
+                WidgetType::Custom(_) => {
+                    ui.label("Custom widget settings are not supported in this version.");
+                },
+            }
+            
+            // Enable/disable
+            ui.checkbox(&mut config.enabled, "Enabled");
+            
+            // Save button
+            if ui.button("Save").clicked() {
+                if let Some(id) = &self.editing_widget_id {
+                    if let Err(e) = self.widget_manager.update_widget(id, config.clone()) {
+                        error!("Failed to update widget: {}", e);
+                    }
+                } else {
+                    // Generate a unique ID for the new widget
+                    let id = format!("widget_{}", chrono::Utc::now().timestamp_millis());
+                    if let Err(e) = self.widget_manager.add_widget(id, config.clone()) {
+                        error!("Failed to add widget: {}", e);
+                    }
+                }
+                
+                // Save widgets
+                if let Err(e) = self.widget_manager.save_widgets(&self.config) {
+                    error!("Failed to save widgets: {}", e);
+                }
+                
+                self.new_widget = None;
+                self.editing_widget_id = None;
+            }
+            
+            // Cancel button
+            if ui.button("Cancel").clicked() {
+                self.new_widget = None;
+                self.editing_widget_id = None;
+            }
+        }
+        
+        // Widget preview
+        ui.separator();
+        ui.heading("Widget Preview");
+        
+        if let Err(e) = self.widget_manager.render_widgets(ui) {
+            error!("Failed to render widgets: {}", e);
         }
     }
     
