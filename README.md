@@ -49,6 +49,9 @@
 - 📋 **Widget System**
   - Display useful information on your desktop with customizable widgets
 
+- 🖥️ **Hyprland Support**
+  - Optimized for the Hyprland window manager with multi-monitor support
+
 ## 📥 Installation
 
 ### Windows
@@ -65,6 +68,20 @@
 
 1. Download the latest release from the [Releases](https://github.com/sreevarshan-xenoz/aether-desk/releases) page
 2. Extract the archive and run the application
+
+#### Hyprland Support
+
+Aether-Desk includes optimized support for the Hyprland window manager:
+
+- Automatic detection of Hyprland environment
+- Multi-monitor wallpaper support
+- Efficient wallpaper setting using Hyprland's native tools
+
+To use Aether-Desk with Hyprland:
+
+1. Make sure you have Hyprland installed and running
+2. Install Aether-Desk using the instructions above
+3. Aether-Desk will automatically detect Hyprland and use the optimized wallpaper manager
 
 ## 🛠️ Building from Source
 
