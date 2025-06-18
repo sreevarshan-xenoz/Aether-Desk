@@ -734,12 +734,13 @@ impl Widget for NotesWidget {
     }
     
     fn update_settings(&mut self, settings: HashMap<String, String>) -> AppResult<()> {
-        self.settings = settings.clone();
-        
         // Update notes content if provided
         if let Some(content) = settings.get("content") {
             self.notes = content.clone();
         }
+        
+        // Update other settings
+        self.settings = settings;
         
         Ok(())
     }
