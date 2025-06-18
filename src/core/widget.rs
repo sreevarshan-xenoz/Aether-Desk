@@ -24,6 +24,9 @@ pub enum WidgetType {
     /// Calendar widget
     Calendar,
     
+    /// Notes widget
+    Notes,
+    
     /// Custom widget
     Custom(String),
 }
@@ -206,6 +209,24 @@ impl WidgetManager {
                     opacity: None,
                 },
             ),
+            (
+                "notes".to_string(),
+                WidgetConfig {
+                    widget_type: WidgetType::Notes,
+                    position: WidgetPosition::BottomRight,
+                    size: WidgetSize::Medium,
+                    settings: {
+                        let mut settings = HashMap::new();
+                        settings.insert("content".to_string(), "Welcome to Aether-Desk!\n\nThis is a notes widget. You can edit this text to keep notes on your desktop.".to_string());
+                        settings.insert("font_size".to_string(), "14".to_string());
+                        settings.insert("bg_color".to_string(), "#f0f0f0".to_string());
+                        settings
+                    },
+                    enabled: true,
+                    background_color: None,
+                    opacity: None,
+                },
+            ),
         ];
         
         let default_configs_map: HashMap<String, WidgetConfig> = default_configs.into_iter().collect();
@@ -247,6 +268,9 @@ impl WidgetManager {
                 },
                 WidgetType::Calendar => {
                     Box::new(CalendarWidget::new(config.settings.clone()))
+                },
+                WidgetType::Notes => {
+                    Box::new(NotesWidget::new(config.settings.clone()))
                 },
                 WidgetType::Custom(ref widget_type) => {
                     // Custom widgets are not implemented in this version
@@ -659,6 +683,109 @@ impl Widget for CalendarWidget {
         // In a real implementation, this would render a calendar
         // For now, we'll just display the current date
         ui.label(format!("Today: {}", now.format("%Y-%m-%d")));
+        
+        Ok(())
+    }
+    
+    fn update(&mut self) -> AppResult<()> {
+        // Nothing to update
+        Ok(())
+    }
+}
+
+/// Notes widget
+pub struct NotesWidget {
+    /// Widget settings
+    settings: HashMap<String, String>,
+    
+    /// Notes content
+    notes: String,
+}
+
+impl NotesWidget {
+    /// Create a new notes widget
+    pub fn new(settings: HashMap<String, String>) -> Self {
+        let notes = settings.get("content").unwrap_or(&"".to_string()).clone();
+        
+        Self {
+            settings,
+            notes,
+        }
+    }
+}
+
+impl Widget for NotesWidget {
+    fn get_type(&self) -> WidgetType {
+        WidgetType::Notes
+    }
+    
+    fn get_name(&self) -> String {
+        "Notes".to_string()
+    }
+    
+    fn get_description(&self) -> String {
+        "Displays notes on your desktop".to_string()
+    }
+    
+    fn get_settings(&self) -> HashMap<String, String> {
+        let mut settings = self.settings.clone();
+        settings.insert("content".to_string(), self.notes.clone());
+        settings
+    }
+    
+    fn update_settings(&mut self, settings: HashMap<String, String>) -> AppResult<()> {
+        self.settings = settings.clone();
+        
+        // Update notes content if provided
+        if let Some(content) = settings.get("content") {
+            self.notes = content.clone();
+        }
+        
+        Ok(())
+    }
+    
+    fn render(&self, ui: &mut egui::Ui) -> AppResult<()> {
+        // Get settings
+        let font_size = self.settings.get("font_size")
+            .and_then(|s| s.parse::<f32>().ok())
+            .unwrap_or(14.0);
+        
+        let bg_color = self.settings.get("bg_color")
+            .map(|c| {
+                // Parse hex color (#RRGGBB)
+                if c.starts_with('#') && c.len() == 7 {
+                    let r = u8::from_str_radix(&c[1..3], 16).unwrap_or(255);
+                    let g = u8::from_str_radix(&c[3..5], 16).unwrap_or(255);
+                    let b = u8::from_str_radix(&c[5..7], 16).unwrap_or(255);
+                    egui::Color32::from_rgb(r, g, b)
+                } else {
+                    egui::Color32::WHITE
+                }
+            })
+            .unwrap_or(egui::Color32::WHITE);
+        
+        // Create a frame with the background color
+        let frame = egui::Frame::none()
+            .fill(bg_color)
+            .rounding(5.0)
+            .stroke(egui::Stroke::new(1.0, egui::Color32::from_rgba_premultiplied(0, 0, 0, 50)));
+        
+        frame.show(ui, |ui| {
+            // Set the font size
+            let style = ui.style_mut();
+            style.text_styles.get_mut(&egui::TextStyle::Body).unwrap().size = font_size;
+            
+            // Display the notes content
+            ui.label("Notes:");
+            
+            // Create a text area for the notes
+            let mut notes = self.notes.clone();
+            if ui.text_edit_multiline(&mut notes).changed() {
+                // In a real implementation, we would update the notes content
+                // For now, we'll just log the change
+                debug!("Notes content changed");
+            }
+        });
         
         Ok(())
     }

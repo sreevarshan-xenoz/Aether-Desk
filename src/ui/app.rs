@@ -597,6 +597,7 @@ impl AetherDeskApp {
                         ui.selectable_value(&mut config.widget_type, WidgetType::Weather, "Weather");
                         ui.selectable_value(&mut config.widget_type, WidgetType::SystemMonitor, "System Monitor");
                         ui.selectable_value(&mut config.widget_type, WidgetType::Calendar, "Calendar");
+                        ui.selectable_value(&mut config.widget_type, WidgetType::Notes, "Notes");
                         ui.selectable_value(&mut config.widget_type, WidgetType::Custom("custom".to_string()), "Custom");
                     });
             });
@@ -681,6 +682,31 @@ impl AetherDeskApp {
                         let mut show_week_numbers = config.settings.get("show_week_numbers").unwrap_or(&"false".to_string()).clone();
                         if ui.checkbox(&mut (show_week_numbers == "true"), "").changed() {
                             config.settings.insert("show_week_numbers".to_string(), show_week_numbers);
+                        }
+                    });
+                },
+                WidgetType::Notes => {
+                    ui.horizontal(|ui| {
+                        ui.label("Notes Content:");
+                        let mut content = config.settings.get("content").unwrap_or(&"".to_string()).clone();
+                        if ui.text_edit_multiline(&mut content).changed() {
+                            config.settings.insert("content".to_string(), content);
+                        }
+                    });
+                    
+                    ui.horizontal(|ui| {
+                        ui.label("Font Size:");
+                        let mut font_size = config.settings.get("font_size").unwrap_or(&"14".to_string()).clone();
+                        if ui.text_edit_singleline(&mut font_size).changed() {
+                            config.settings.insert("font_size".to_string(), font_size);
+                        }
+                    });
+                    
+                    ui.horizontal(|ui| {
+                        ui.label("Background Color:");
+                        let mut bg_color = config.settings.get("bg_color").unwrap_or(&"#ffffff".to_string()).clone();
+                        if ui.text_edit_singleline(&mut bg_color).changed() {
+                            config.settings.insert("bg_color".to_string(), bg_color);
                         }
                     });
                 },
