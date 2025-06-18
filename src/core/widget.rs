@@ -80,6 +80,12 @@ pub struct WidgetConfig {
     
     /// Whether the widget is enabled
     pub enabled: bool,
+    
+    /// Widget background color (RGBA)
+    pub background_color: Option<[u8; 4]>,
+    
+    /// Widget opacity (0.0 to 1.0)
+    pub opacity: Option<f32>,
 }
 
 /// Widget trait
@@ -184,6 +190,8 @@ impl WidgetManager {
                     size: WidgetSize::Medium,
                     settings: HashMap::new(),
                     enabled: true,
+                    background_color: None,
+                    opacity: None,
                 },
             ),
             (
@@ -194,6 +202,8 @@ impl WidgetManager {
                     size: WidgetSize::Medium,
                     settings: HashMap::new(),
                     enabled: true,
+                    background_color: None,
+                    opacity: None,
                 },
             ),
         ];
