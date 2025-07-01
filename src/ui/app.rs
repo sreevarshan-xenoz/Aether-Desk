@@ -771,8 +771,69 @@ impl AetherDeskApp {
         ui.separator();
         ui.heading("Widget Preview");
 
-        if let Err(e) = self.widget_manager.render_widgets(ui, bg_color, accent_color) {
-            error!("Failed to render widgets: {}", e);
+        let preview_size = egui::vec2(600.0, 400.0);
+        let mut updated_positions = Vec::new();
+        let (bg_color, accent_color) = {
+            let theme_config = &self.config.app.theme;
+            match theme_config.theme {
+                Theme::Light => (
+                    egui::Color32::from_rgb(245, 245, 245),
+                    egui::Color32::from_rgb(33, 150, 243),
+                ),
+                Theme::Dark => (
+                    egui::Color32::from_rgb(32, 34, 37),
+                    egui::Color32::from_rgb(0, 188, 212),
+                ),
+                Theme::Custom => {
+                    let bg = theme_config.background_color.as_ref().and_then(|c| parse_hex_color(c)).unwrap_or(egui::Color32::from_rgb(32, 34, 37));
+                    let accent = theme_config.accent_color.as_ref().and_then(|c| parse_hex_color(c)).unwrap_or(egui::Color32::from_rgb(0, 188, 212));
+                    (bg, accent)
+                }
+            }
+        };
+        
+        egui::Frame::none().fill(bg_color).show(ui, |ui| {
+            ui.set_min_size(preview_size);
+            let response = ui.allocate_rect(ui.max_rect(), egui::Sense::hover());
+            let mut drag_id: Option<String> = None;
+            for (id, config) in self.widget_manager.get_widget_configs().iter_mut() {
+                let (mut x, mut y) = match config.position {
+                    WidgetPosition::Custom(x, y) => (x as f32, y as f32),
+                    WidgetPosition::TopLeft => (20.0, 20.0),
+                    WidgetPosition::TopRight => (preview_size.x - 180.0, 20.0),
+                    WidgetPosition::BottomLeft => (20.0, preview_size.y - 120.0),
+                    WidgetPosition::BottomRight => (preview_size.x - 180.0, preview_size.y - 120.0),
+                };
+                let area_id = egui::Id::new(format!("widget_preview_{}", id));
+                egui::Area::new(area_id)
+                    .movable(true)
+                    .current_pos(egui::pos2(x, y))
+                    .show(ui.ctx(), |ui| {
+                        let before = ui.min_rect().left_top();
+                        if let Err(e) = self.widget_manager.render_widgets(ui, bg_color, accent_color) {
+                            error!("Failed to render widgets: {}", e);
+                        }
+                        let after = ui.min_rect().left_top();
+                        if before != after {
+                            // Widget was moved
+                            let new_x = after.x;
+                            let new_y = after.y;
+                            updated_positions.push((id.clone(), WidgetPosition::Custom(new_x as i32, new_y as i32)));
+                        }
+                    });
+            }
+        });
+        // Save updated positions
+        for (id, pos) in updated_positions {
+            if let Some(mut config) = self.widget_manager.get_widget_configs().get_mut(&id) {
+                config.position = pos.clone();
+                if let Err(e) = self.widget_manager.update_widget(&id, config.clone()) {
+                    error!("Failed to update widget position: {}", e);
+                }
+                if let Err(e) = self.widget_manager.save_widgets(&self.config) {
+                    error!("Failed to save widgets: {}", e);
+                }
+            }
         }
     }
     
