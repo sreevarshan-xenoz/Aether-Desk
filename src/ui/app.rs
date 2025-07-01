@@ -1,4 +1,4 @@
-use crate::core::{AppResult, Config, Plugin, PluginConfig, PluginManager, ScheduleItem, TriggerType, WallpaperScheduler, Widget, WidgetConfig, WidgetManager, WidgetPosition, WidgetSize, WidgetType, WallpaperType};
+use crate::core::{AppResult, Config, Plugin, PluginConfig, PluginManager, ScheduleItem, TriggerType, WallpaperScheduler, Widget, WidgetConfig, WidgetManager, WidgetPosition, WidgetSize, WidgetType, WallpaperType, Theme, ThemeConfig};
 use crate::platform::WallpaperManager;
 use crate::wallpapers::{AudioWallpaper, ShaderWallpaper, StaticWallpaper, VideoWallpaper, WebWallpaper, Wallpaper};
 use chrono::{NaiveTime, Timelike};
@@ -827,6 +827,53 @@ impl AetherDeskApp {
         ui.collapsing("Plugins", |ui| {
             // TODO: Add plugin settings
             ui.label("Plugin settings will be available in a future release.");
+        });
+        
+        // Theme settings
+        ui.collapsing("Theme", |ui| {
+            let theme_config = &mut self.config.app.theme;
+            let mut selected_theme = theme_config.theme.clone();
+
+            ui.horizontal(|ui| {
+                ui.label("Theme:");
+                egui::ComboBox::from_label("")
+                    .selected_text(format!("{:?}", selected_theme))
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(&mut selected_theme, Theme::Light, "Light");
+                        ui.selectable_value(&mut selected_theme, Theme::Dark, "Dark");
+                        ui.selectable_value(&mut selected_theme, Theme::Custom, "Custom");
+                    });
+            });
+
+            if selected_theme != theme_config.theme {
+                theme_config.theme = selected_theme.clone();
+                if let Err(e) = self.config.save() {
+                    error!("Failed to save config: {}", e);
+                }
+            }
+
+            if selected_theme == Theme::Custom {
+                ui.horizontal(|ui| {
+                    ui.label("Accent Color (hex):");
+                    let mut accent = theme_config.accent_color.clone().unwrap_or("#00bcd4".to_string());
+                    if ui.text_edit_singleline(&mut accent).changed() {
+                        theme_config.accent_color = Some(accent);
+                        if let Err(e) = self.config.save() {
+                            error!("Failed to save config: {}", e);
+                        }
+                    }
+                });
+                ui.horizontal(|ui| {
+                    ui.label("Background Color (hex):");
+                    let mut bg = theme_config.background_color.clone().unwrap_or("#181818".to_string());
+                    if ui.text_edit_singleline(&mut bg).changed() {
+                        theme_config.background_color = Some(bg);
+                        if let Err(e) = self.config.save() {
+                            error!("Failed to save config: {}", e);
+                        }
+                    }
+                });
+            }
         });
     }
     

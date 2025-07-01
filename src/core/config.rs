@@ -74,6 +74,28 @@ pub struct AppConfig {
     
     /// Whether to minimize to tray
     pub minimize_to_tray: bool,
+    
+    /// Theme configuration
+    pub theme: ThemeConfig,
+}
+
+/// Theme configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ThemeConfig {
+    /// Theme type
+    pub theme: Theme,
+    /// Custom accent color (if custom theme)
+    pub accent_color: Option<String>,
+    /// Custom background color (if custom theme)
+    pub background_color: Option<String>,
+}
+
+/// Theme type
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum Theme {
+    Light,
+    Dark,
+    Custom,
 }
 
 /// Plugin configuration
@@ -99,6 +121,7 @@ impl Default for Config {
                 start_with_system: false,
                 show_in_tray: true,
                 minimize_to_tray: true,
+                theme: ThemeConfig::default(),
             },
             plugins: PluginConfig {
                 enabled: Vec::new(),
