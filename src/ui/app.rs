@@ -137,29 +137,48 @@ impl AetherDeskApp {
     
     /// Show the main UI
     pub fn show(&mut self, ctx: &egui::CtxRef) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Aether-Desk");
+        // Compute theme colors
+        let (bg_color, accent_color) = {
+            let theme_config = &self.config.app.theme;
+            match theme_config.theme {
+                Theme::Light => (
+                    egui::Color32::from_rgb(245, 245, 245),
+                    egui::Color32::from_rgb(33, 150, 243),
+                ),
+                Theme::Dark => (
+                    egui::Color32::from_rgb(32, 34, 37),
+                    egui::Color32::from_rgb(0, 188, 212),
+                ),
+                Theme::Custom => {
+                    let bg = theme_config.background_color.as_ref().and_then(|c| parse_hex_color(c)).unwrap_or(egui::Color32::from_rgb(32, 34, 37));
+                    let accent = theme_config.accent_color.as_ref().and_then(|c| parse_hex_color(c)).unwrap_or(egui::Color32::from_rgb(0, 188, 212));
+                    (bg, accent)
+                }
+            }
+        };
+        
+        egui::CentralPanel::default()
+            .frame(egui::Frame::none().fill(bg_color))
+            .show(ctx, |ui| {
+            ui.heading(egui::RichText::new("Aether-Desk").color(accent_color).size(32.0));
             
             // Tab selection
             ui.horizontal(|ui| {
-                if ui.selectable_label(self.selected_tab == Tab::Wallpaper, "Wallpaper").clicked() {
-                    self.selected_tab = Tab::Wallpaper;
-                }
-                
-                if ui.selectable_label(self.selected_tab == Tab::Scheduler, "Scheduler").clicked() {
-                    self.selected_tab = Tab::Scheduler;
-                }
-                
-                if ui.selectable_label(self.selected_tab == Tab::Widgets, "Widgets").clicked() {
-                    self.selected_tab = Tab::Widgets;
-                }
-                
-                if ui.selectable_label(self.selected_tab == Tab::Plugins, "Plugins").clicked() {
-                    self.selected_tab = Tab::Plugins;
-                }
-                
-                if ui.selectable_label(self.selected_tab == Tab::Settings, "Settings").clicked() {
-                    self.selected_tab = Tab::Settings;
+                let tab_names = [
+                    (Tab::Wallpaper, "Wallpaper"),
+                    (Tab::Scheduler, "Scheduler"),
+                    (Tab::Widgets, "Widgets"),
+                    (Tab::Plugins, "Plugins"),
+                    (Tab::Settings, "Settings"),
+                ];
+                for (tab, label) in tab_names.iter() {
+                    let selected = self.selected_tab == *tab;
+                    let button = egui::SelectableLabel::new(selected, *label)
+                        .text_color(if selected { accent_color } else { ui.visuals().text_color() })
+                        .background_color(if selected { accent_color.linear_multiply(0.1) } else { bg_color });
+                    if ui.add(button).clicked() {
+                        self.selected_tab = *tab;
+                    }
                 }
             });
             
@@ -751,27 +770,6 @@ impl AetherDeskApp {
         // Widget preview
         ui.separator();
         ui.heading("Widget Preview");
-
-        // Compute theme colors
-        let (bg_color, accent_color) = {
-            use crate::core::{Theme, ThemeConfig};
-            let theme_config = &self.config.app.theme;
-            match theme_config.theme {
-                Theme::Light => (
-                    egui::Color32::from_rgb(245, 245, 245),
-                    egui::Color32::from_rgb(33, 150, 243),
-                ),
-                Theme::Dark => (
-                    egui::Color32::from_rgb(32, 34, 37),
-                    egui::Color32::from_rgb(0, 188, 212),
-                ),
-                Theme::Custom => {
-                    let bg = theme_config.background_color.as_ref().and_then(|c| parse_hex_color(c)).unwrap_or(egui::Color32::from_rgb(32, 34, 37));
-                    let accent = theme_config.accent_color.as_ref().and_then(|c| parse_hex_color(c)).unwrap_or(egui::Color32::from_rgb(0, 188, 212));
-                    (bg, accent)
-                }
-            }
-        };
 
         if let Err(e) = self.widget_manager.render_widgets(ui, bg_color, accent_color) {
             error!("Failed to render widgets: {}", e);
