@@ -751,8 +751,29 @@ impl AetherDeskApp {
         // Widget preview
         ui.separator();
         ui.heading("Widget Preview");
-        
-        if let Err(e) = self.widget_manager.render_widgets(ui) {
+
+        // Compute theme colors
+        let (bg_color, accent_color) = {
+            use crate::core::{Theme, ThemeConfig};
+            let theme_config = &self.config.app.theme;
+            match theme_config.theme {
+                Theme::Light => (
+                    egui::Color32::from_rgb(245, 245, 245),
+                    egui::Color32::from_rgb(33, 150, 243),
+                ),
+                Theme::Dark => (
+                    egui::Color32::from_rgb(32, 34, 37),
+                    egui::Color32::from_rgb(0, 188, 212),
+                ),
+                Theme::Custom => {
+                    let bg = theme_config.background_color.as_ref().and_then(|c| parse_hex_color(c)).unwrap_or(egui::Color32::from_rgb(32, 34, 37));
+                    let accent = theme_config.accent_color.as_ref().and_then(|c| parse_hex_color(c)).unwrap_or(egui::Color32::from_rgb(0, 188, 212));
+                    (bg, accent)
+                }
+            }
+        };
+
+        if let Err(e) = self.widget_manager.render_widgets(ui, bg_color, accent_color) {
             error!("Failed to render widgets: {}", e);
         }
     }
@@ -956,5 +977,17 @@ impl AetherDeskApp {
                 info!("Wallpaper stopped");
             }
         }
+    }
+}
+
+// Helper function to parse hex color
+fn parse_hex_color(hex: &str) -> Option<egui::Color32> {
+    if hex.starts_with('#') && hex.len() == 7 {
+        let r = u8::from_str_radix(&hex[1..3], 16).ok()?;
+        let g = u8::from_str_radix(&hex[3..5], 16).ok()?;
+        let b = u8::from_str_radix(&hex[5..7], 16).ok()?;
+        Some(egui::Color32::from_rgb(r, g, b))
+    } else {
+        None
     }
 } 

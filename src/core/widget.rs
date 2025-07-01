@@ -387,7 +387,7 @@ impl WidgetManager {
     }
     
     /// Render all widgets
-    pub fn render_widgets(&self, ui: &mut egui::Ui) -> AppResult<()> {
+    pub fn render_widgets(&self, ui: &mut egui::Ui, bg_color: egui::Color32, accent_color: egui::Color32) -> AppResult<()> {
         let widgets = self.widgets.lock().unwrap();
         let configs = self.widget_configs.lock().unwrap();
         
@@ -402,22 +402,22 @@ impl WidgetManager {
                 if !config.enabled {
                     continue;
                 }
-                
-                // Create a frame for the widget
+                // Modern frame for the widget
                 let frame = egui::Frame::none()
-                    .fill(egui::Color32::from_rgba_premultiplied(0, 0, 0, 0))
-                    .rounding(5.0)
-                    .stroke(egui::Stroke::new(1.0, egui::Color32::from_rgba_premultiplied(255, 255, 255, 50)));
+                    .fill(bg_color)
+                    .rounding(10.0)
+                    .shadow(egui::epaint::Shadow::big_dark())
+                    .stroke(egui::Stroke::new(2.0, accent_color))
+                    .inner_margin(egui::Margin::same(12.0));
                 
                 frame.show(ui, |ui| {
-                    ui.heading(&widget_name);
+                    ui.heading(egui::RichText::new(&widget_name).color(accent_color));
                     if let Err(e) = widget.render(ui) {
                         error!("Failed to render widget: {}", e);
                     }
                 });
             }
         }
-        
         Ok(())
     }
 }
