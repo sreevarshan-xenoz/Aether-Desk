@@ -2,7 +2,7 @@ use crate::core::{AppResult, Config, Plugin, PluginConfig, PluginManager, Schedu
 use crate::platform::WallpaperManager;
 use crate::wallpapers::{AudioWallpaper, ShaderWallpaper, StaticWallpaper, VideoWallpaper, WebWallpaper, Wallpaper};
 use chrono::{NaiveTime, Timelike};
-use eframe::{egui, epi};
+use eframe::egui;
 use log::{debug, error, info};
 use rfd::FileDialog;
 use std::collections::HashMap;

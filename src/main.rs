@@ -6,28 +6,10 @@ mod wallpapers;
 mod ui;
 
 use anyhow::Result;
-use log::{error, info, warn};
-use core::{AppResult, Config};
-use platform::WallpaperManager;
+use log::{error, info};
 use ui::AetherDeskApp;
 use eframe::egui;
 use std::sync::Arc;
-
-/// Main application
-struct AetherDesk {
-    /// Application UI
-    app: AetherDeskApp,
-}
-
-impl epi::App for AetherDesk {
-    fn name(&self) -> &str {
-        "Aether-Desk"
-    }
-    
-    fn update(&mut self, ctx: &egui::CtxRef, _frame: &epi::Frame) {
-        self.app.show(ctx);
-    }
-}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize logger
@@ -41,20 +23,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create application UI
     let app = AetherDeskApp::new(wallpaper_manager);
     
-    // Create application
-    let app = AetherDesk { app };
-    
     // Run application
     let options = eframe::NativeOptions {
         initial_window_size: Some(egui::vec2(800.0, 600.0)),
         ..Default::default()
     };
     
-    if let Err(e) = eframe::run_native(Box::new(app), options) {
+    if let Err(e) = eframe::run_native(
+        "Aether-Desk",
+        options,
+        Box::new(|cc| Box::new(app))
+    ) {
         error!("Failed to run application: {}", e);
         return Err(e.into());
     }
     
     info!("Aether-Desk stopped");
     Ok(())
-} 
+}
