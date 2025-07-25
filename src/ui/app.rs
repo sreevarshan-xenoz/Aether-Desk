@@ -134,9 +134,18 @@ impl AetherDeskApp {
             editing_widget_id: None,
         }
     }
-    
+}
+
+// Implement eframe::App trait
+impl eframe::App for AetherDeskApp {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.show(ctx);
+    }
+}
+
+impl AetherDeskApp {
     /// Show the main UI
-    pub fn show(&mut self, ctx: &egui::CtxRef) {
+    pub fn show(&mut self, ctx: &egui::Context) {
         // Compute theme colors
         let (bg_color, accent_color) = {
             let theme_config = &self.config.app.theme;
