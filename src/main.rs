@@ -6,12 +6,11 @@ mod wallpapers;
 mod ui;
 
 use anyhow::Result;
-use log::{error, info};
-use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem};
-use aether_desk::core::{AppResult, Config, WidgetManager};
-use aether_desk::platform::{self, WallpaperManager};
-use aether_desk::ui::AetherDeskApp;
-use eframe::{egui, epi};
+use log::{error, info, warn};
+use core::{AppResult, Config};
+use platform::WallpaperManager;
+use ui::AetherDeskApp;
+use eframe::egui;
 use std::sync::Arc;
 
 /// Main application

@@ -1,11 +1,11 @@
 [package]
 name = "aether-desk"
 version = "0.1.0"
-edition = "2021"
-authors = ["Your Name <your.email@example.com>"]
+edition = "2025"
+authors = ["SreeVarshan <https://sreevarshan-portfolio-lilac.vercel.app>"]
 description = "A modern, cross-platform desktop wallpaper manager with advanced features"
 license = "MIT"
-repository = "https://github.com/yourusername/aether-desk"
+repository = "https://github.com/sreevarshan-xenoz/aether-desk"
 readme = "README.md"
 keywords = ["wallpaper", "desktop", "gui", "cross-platform"]
 categories = ["gui", "multimedia"]
@@ -15,22 +15,28 @@ categories = ["gui", "multimedia"]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 log = "0.4"
-env_logger = "0.9"
+env_logger = "0.10"
 chrono = { version = "0.4", features = ["serde"] }
+anyhow = "1.0"
+dirs = "5.0"
+tokio = { version = "1.0", features = ["full"] }
 
-# UI
-eframe = "0.19"
-egui = "0.19"
-rfd = "0.11"
+# UI - Updated to latest compatible versions
+eframe = { version = "0.24", default-features = false, features = ["default_fonts", "glow"] }
+egui = "0.24"
+rfd = "0.12"
 
 # Platform-specific
+[target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["winuser", "shellapi", "shlobj", "combaseapi", "objbase", "oleauto", "wtypesbase"] }
-tao = "0.20"
-winit = "0.28"
-raw-window-handle = "0.5"
 
-# Build
-tauri-build = { version = "1.2", features = [] }
+# Image processing and media
+image = "0.24"
+
+[dev-dependencies]
+tokio-test = "0.4"
+tempfile = "3.8"
+serial_test = "3.0"
 
 [build-dependencies]
 tauri-build = { version = "1.2", features = [] }
