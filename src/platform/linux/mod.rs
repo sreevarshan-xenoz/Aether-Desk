@@ -126,7 +126,7 @@ impl LinuxWallpaperManager {
 }
 
 impl WallpaperManager for LinuxWallpaperManager {
-    fn set_static_wallpaper(&self, path: &Path) -> AppResult<()> {
+    async fn set_static_wallpaper(&self, path: &Path) -> AppResult<()> {
         info!("Setting static wallpaper: {}", path.display());
         
         // Convert path to absolute path
@@ -177,7 +177,7 @@ impl WallpaperManager for LinuxWallpaperManager {
         
         if !success {
             error!("Failed to set static wallpaper using any method");
-            return Err(crate::core::AppError::WallpaperError("Failed to set static wallpaper".to_string()).into());
+            return Err(crate::core::AppError::WallpaperError("Failed to set static wallpaper".to_string()));
         }
         
         // Update current wallpaper
@@ -187,7 +187,7 @@ impl WallpaperManager for LinuxWallpaperManager {
         Ok(())
     }
     
-    fn set_video_wallpaper(&self, path: &Path) -> AppResult<()> {
+    async fn set_video_wallpaper(&self, path: &Path) -> AppResult<()> {
         info!("Setting video wallpaper: {}", path.display());
         
         // Convert path to absolute path
@@ -206,14 +206,14 @@ impl WallpaperManager for LinuxWallpaperManager {
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
             error!("Failed to set video wallpaper: {}", error);
-            return Err(crate::core::AppError::WallpaperError(error.to_string()).into());
+            return Err(crate::core::AppError::WallpaperError(error.to_string()));
         }
         
         info!("Video wallpaper set successfully");
         Ok(())
     }
     
-    fn set_web_wallpaper(&self, url: &str) -> AppResult<()> {
+    async fn set_web_wallpaper(&self, url: &str) -> AppResult<()> {
         info!("Setting web wallpaper: {}", url);
         
         // Use a web browser to display the webpage as wallpaper
@@ -224,14 +224,14 @@ impl WallpaperManager for LinuxWallpaperManager {
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
             error!("Failed to set web wallpaper: {}", error);
-            return Err(crate::core::AppError::WallpaperError(error.to_string()).into());
+            return Err(crate::core::AppError::WallpaperError(error.to_string()));
         }
         
         info!("Web wallpaper set successfully");
         Ok(())
     }
     
-    fn set_shader_wallpaper(&self, path: &Path) -> AppResult<()> {
+    async fn set_shader_wallpaper(&self, path: &Path) -> AppResult<()> {
         info!("Setting shader wallpaper: {}", path.display());
         
         // Convert path to absolute path
@@ -245,14 +245,14 @@ impl WallpaperManager for LinuxWallpaperManager {
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
             error!("Failed to set shader wallpaper: {}", error);
-            return Err(crate::core::AppError::WallpaperError(error.to_string()).into());
+            return Err(crate::core::AppError::WallpaperError(error.to_string()));
         }
         
         info!("Shader wallpaper set successfully");
         Ok(())
     }
     
-    fn set_audio_wallpaper(&self, path: &Path) -> AppResult<()> {
+    async fn set_audio_wallpaper(&self, path: &Path) -> AppResult<()> {
         info!("Setting audio wallpaper: {}", path.display());
         
         // Convert path to absolute path
@@ -266,14 +266,14 @@ impl WallpaperManager for LinuxWallpaperManager {
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
             error!("Failed to set audio wallpaper: {}", error);
-            return Err(crate::core::AppError::WallpaperError(error.to_string()).into());
+            return Err(crate::core::AppError::WallpaperError(error.to_string()));
         }
         
         info!("Audio wallpaper set successfully");
         Ok(())
     }
     
-    fn clear_wallpaper(&self) -> AppResult<()> {
+    async fn clear_wallpaper(&self) -> AppResult<()> {
         info!("Clearing wallpaper");
         
         // Try different methods to clear the wallpaper
@@ -321,7 +321,7 @@ impl WallpaperManager for LinuxWallpaperManager {
         
         if !success {
             error!("Failed to clear wallpaper using any method");
-            return Err(crate::core::AppError::WallpaperError("Failed to clear wallpaper".to_string()).into());
+            return Err(crate::core::AppError::WallpaperError("Failed to clear wallpaper".to_string()));
         }
         
         // Clear current wallpaper
@@ -331,8 +331,13 @@ impl WallpaperManager for LinuxWallpaperManager {
         Ok(())
     }
     
-    fn get_current_wallpaper(&self) -> AppResult<Option<String>> {
+    async fn get_current_wallpaper(&self) -> AppResult<Option<String>> {
         let current = self.current_wallpaper.lock().await;
         Ok(current.clone())
     }
-} 
+    
+    async fn stop_wallpaper(&self) -> AppResult<()> {
+        info!("Stopping wallpaper");
+        self.clear_wallpaper().await
+    }
+}
