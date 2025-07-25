@@ -35,15 +35,7 @@ impl WallpaperManager for WindowsWallpaperManager {
             .args(&[
                 "-Command",
                 &format!(
-                    "Add-Type -TypeDefinition @'
-using System;
-using System.Runtime.InteropServices;
-public class Wallpaper {{
-    [DllImport(\"user32.dll\", CharSet = CharSet.Auto)]
-    public static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
-}}
-'@;
-[Wallpaper]::SystemParametersInfo(0x0014, 0, '{}', 0x01 -bor 0x02)"
+                    "Add-Type -TypeDefinition @'\nusing System;\nusing System.Runtime.InteropServices;\npublic class Wallpaper {{\n    [DllImport(\"user32.dll\", CharSet = CharSet.Auto)]\n    public static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);\n}}\n'@;\n[Wallpaper]::SystemParametersInfo(0x0014, 0, '{}', 0x01 -bor 0x02)",
                     path.to_string_lossy()
                 ),
             ])
@@ -52,7 +44,7 @@ public class Wallpaper {{
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
             error!("Failed to set static wallpaper: {}", error);
-            return Err(crate::core::AppError::WallpaperError(error.to_string()).into());
+            return Err(crate::core::AppError::WallpaperError(error.to_string()));
         }
         
         info!("Static wallpaper set successfully");
@@ -78,7 +70,7 @@ public class Wallpaper {{
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
             error!("Failed to set video wallpaper: {}", error);
-            return Err(crate::core::AppError::WallpaperError(error.to_string()).into());
+            return Err(crate::core::AppError::WallpaperError(error.to_string()));
         }
         
         info!("Video wallpaper set successfully");
@@ -96,7 +88,7 @@ public class Wallpaper {{
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
             error!("Failed to set web wallpaper: {}", error);
-            return Err(crate::core::AppError::WallpaperError(error.to_string()).into());
+            return Err(crate::core::AppError::WallpaperError(error.to_string()));
         }
         
         info!("Web wallpaper set successfully");
@@ -117,7 +109,7 @@ public class Wallpaper {{
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
             error!("Failed to set shader wallpaper: {}", error);
-            return Err(crate::core::AppError::WallpaperError(error.to_string()).into());
+            return Err(crate::core::AppError::WallpaperError(error.to_string()));
         }
         
         info!("Shader wallpaper set successfully");
@@ -138,7 +130,7 @@ public class Wallpaper {{
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
             error!("Failed to set audio wallpaper: {}", error);
-            return Err(crate::core::AppError::WallpaperError(error.to_string()).into());
+            return Err(crate::core::AppError::WallpaperError(error.to_string()));
         }
         
         info!("Audio wallpaper set successfully");
@@ -152,25 +144,24 @@ public class Wallpaper {{
         let output = Command::new("powershell")
             .args(&[
                 "-Command",
-                "Add-Type -TypeDefinition @'
-                using System;
-                using System.Runtime.InteropServices;
-                public class Wallpaper {
-                    [DllImport(\"user32.dll\", CharSet = CharSet.Auto)]
-                    public static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
-                }
-                '@;
-                [Wallpaper]::SystemParametersInfo(0x0014, 0, '', 0x01 -bor 0x02)",
+                "Add-Type -TypeDefinition @'\nusing System;\nusing System.Runtime.InteropServices;\npublic class Wallpaper {\n    [DllImport(\"user32.dll\", CharSet = CharSet.Auto)]\n    public static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);\n}\n'@;\n[Wallpaper]::SystemParametersInfo(0x0014, 0, '', 0x01 -bor 0x02)",
             ])
             .output()?;
         
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
             error!("Failed to clear wallpaper: {}", error);
-            return Err(crate::core::AppError::WallpaperError(error.to_string()).into());
+            return Err(crate::core::AppError::WallpaperError(error.to_string()));
         }
         
         info!("Wallpaper cleared successfully");
         Ok(())
     }
-} 
+    
+    fn stop_wallpaper(&self) -> AppResult<()> {
+        info!("Stopping wallpaper");
+        
+        // For Windows, this is essentially the same as clearing the wallpaper
+        self.clear_wallpaper()
+    }
+}

@@ -24,6 +24,9 @@ pub trait WallpaperManager: Send + Sync {
     
     /// Clear the current wallpaper
     fn clear_wallpaper(&self) -> AppResult<()>;
+    
+    /// Stop the current wallpaper
+    fn stop_wallpaper(&self) -> AppResult<()>;
 }
 
 /// Create a platform-specific wallpaper manager
