@@ -1,7 +1,7 @@
 [package]
 name = "aether-desk"
 version = "0.1.0"
-edition = "2025"
+edition = "2021"
 authors = ["SreeVarshan <https://sreevarshan-portfolio-lilac.vercel.app>"]
 description = "A modern, cross-platform desktop wallpaper manager with advanced features"
 license = "MIT"
@@ -38,12 +38,10 @@ tokio-test = "0.4"
 tempfile = "3.8"
 serial_test = "3.0"
 
-[build-dependencies]
-tauri-build = { version = "1.2", features = [] }
+# Build dependencies removed - not using Tauri
 
 [features]
-default = ["custom-protocol"]
-custom-protocol = ["tauri/custom-protocol"]
+default = []
 
 [profile.release]
 opt-level = 3
@@ -52,9 +50,9 @@ codegen-units = 1
 panic = "abort"
 strip = true
 
+# Profile optimization for dependencies
 [profile.release.package."*"]
 opt-level = 3
-lto = true
 codegen-units = 1
 
 [profile.dev]
