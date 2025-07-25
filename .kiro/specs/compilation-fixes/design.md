@@ -2,27 +2,36 @@
 
 ## Overview
 
-This design addresses the systematic resolution of 61 compilation errors in the Aether-Desk project. The errors fall into several categories: async/await handling issues, missing error variants, incomplete trait implementations, egui API compatibility problems, and various import/type mismatches. The solution involves updating error handling, fixing async patterns, completing trait implementations, updating UI code for egui compatibility, and resolving borrowing conflicts.
+This design addresses the systematic resolution of 61 compilation errors in the Aether-Desk project to restore it to a buildable state while maintaining all existing functionality. The errors span eight critical areas: compilation success, async/await handling, error variant completeness, trait implementation completeness, UI framework compatibility, import/type management, memory management and borrowing, and platform-specific code handling. The solution involves a phased approach that prioritizes core infrastructure fixes before addressing higher-level functionality, ensuring each change maintains backward compatibility and doesn't introduce new issues.
 
 ## Architecture
 
 ### Error Handling Architecture
 
-The current `AppError` enum in `src/core/error.rs` already contains the necessary variants (`PlatformError`, `WallpaperError`) but the code is referencing them with incorrect names (`Platform`, `Wallpaper`). The fix involves updating all error usage to match the existing enum variants.
+The current `AppError` enum in `src/core/error.rs` needs to be updated to include proper error variants for platform-specific and wallpaper-related errors. The design decision is to ensure all error types have dedicated variants (`Platform`, `Wallpaper`) and that all error creation throughout the codebase uses the correct variant names. This provides consistent error reporting and proper error categorization as required by Requirement 3.
+
+**Design Rationale:** Centralized error handling with specific variants allows for better error categorization, debugging, and user-facing error messages while maintaining type safety.
 
 ### Async/Await Architecture
 
-The wallpaper trait system has a fundamental async/sync mismatch:
+The wallpaper trait system has a fundamental async/sync mismatch that needs systematic resolution:
 - `WallpaperManager` trait methods are async
 - `Wallpaper` trait methods are sync but try to call async methods
-- Solution: Convert `Wallpaper` trait methods to async and update all implementations
+- Mutex handling in async contexts requires proper async-compatible mutexes
+
+**Design Decision:** Convert the entire `Wallpaper` trait to async and update all implementations to use `async_trait`. This ensures proper async/await handling throughout the system as required by Requirement 2.
+
+**Design Rationale:** Making the trait consistently async prevents blocking operations and allows for proper resource management in concurrent scenarios.
 
 ### Platform Manager Architecture
 
-The platform-specific implementations have several issues:
-- Missing `get_current_wallpaper` implementations
+Platform-specific implementations require completion and standardization:
+- Missing `get_current_wallpaper` implementations across platforms
 - Incorrect lifetime annotations on async trait methods
 - Type conversion issues with command arguments
+- Platform-specific API handling differences
+
+**Design Decision:** Implement all missing trait methods with appropriate placeholder implementations and fix type conversions to ensure cross-platform compatibility as required by Requirement 4 and 8.
 
 ## Components and Interfaces
 
@@ -73,16 +82,30 @@ The platform-specific implementations have several issues:
 - **Interface:** Update `NativeOptions` field names
 - **Implementation:** Replace `initial_window_size` with `viewport.inner_size`
 
-### 5. Type and Import Fixes
+### 5. Type and Import Management
 
 **Component:** Widget system
 - **Interface:** Add missing trait imports (`chrono::Datelike`)
 - **Implementation:** Fix temporary value lifetimes
 - **Implementation:** Resolve borrowing conflicts
+- **Implementation:** Remove unused imports to satisfy Requirement 6
 
 **Component:** Command execution
 - **Interface:** Fix `Cow<str>` to `OsStr` conversion
 - **Implementation:** Use `.to_string()` before passing to command args
+- **Implementation:** Ensure proper type bounds for generic parameters
+
+### 6. Memory Management and Borrowing
+
+**Component:** Mutex handling in async contexts
+- **Interface:** Replace `std::sync::Mutex` with `tokio::sync::Mutex` where needed
+- **Implementation:** Use separate scopes for mutex guards to avoid borrow conflicts
+- **Implementation:** Clone values when necessary to prevent lifetime issues
+
+**Component:** Temporary value management
+- **Interface:** Ensure all temporary values have appropriate lifetimes
+- **Implementation:** Use explicit variable bindings for complex expressions
+- **Implementation:** Apply proper Clone implementations where needed
 
 ## Data Models
 
