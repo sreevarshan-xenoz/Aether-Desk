@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use crate::core::{AppError, AppResult};
 use crate::platform::WallpaperManager;
 use log::{debug, error, info};
@@ -52,7 +53,7 @@ impl WallpaperManager for WindowsWallpaperManager {
         Ok(())
     }
     
-    fn set_video_wallpaper(&self, path: &Path) -> AppResult<()> {
+    async fn set_video_wallpaper(&self, path: &Path) -> AppResult<()> {
         info!("Setting video wallpaper: {}", path.display());
         
         // Convert path to absolute path
@@ -78,7 +79,7 @@ impl WallpaperManager for WindowsWallpaperManager {
         Ok(())
     }
     
-    fn set_web_wallpaper(&self, url: &str) -> AppResult<()> {
+    async fn set_web_wallpaper(&self, url: &str) -> AppResult<()> {
         info!("Setting web wallpaper: {}", url);
         
         // Use a web browser to display the webpage as wallpaper
@@ -96,7 +97,7 @@ impl WallpaperManager for WindowsWallpaperManager {
         Ok(())
     }
     
-    fn set_shader_wallpaper(&self, path: &Path) -> AppResult<()> {
+    async fn set_shader_wallpaper(&self, path: &Path) -> AppResult<()> {
         info!("Setting shader wallpaper: {}", path.display());
         
         // Convert path to absolute path
@@ -117,7 +118,7 @@ impl WallpaperManager for WindowsWallpaperManager {
         Ok(())
     }
     
-    fn set_audio_wallpaper(&self, path: &Path) -> AppResult<()> {
+    async fn set_audio_wallpaper(&self, path: &Path) -> AppResult<()> {
         info!("Setting audio wallpaper: {}", path.display());
         
         // Convert path to absolute path
@@ -138,7 +139,7 @@ impl WallpaperManager for WindowsWallpaperManager {
         Ok(())
     }
     
-    fn clear_wallpaper(&self) -> AppResult<()> {
+    async fn clear_wallpaper(&self) -> AppResult<()> {
         info!("Clearing wallpaper");
         
         // Use PowerShell to clear the wallpaper
@@ -159,10 +160,10 @@ impl WallpaperManager for WindowsWallpaperManager {
         Ok(())
     }
     
-    fn stop_wallpaper(&self) -> AppResult<()> {
+    async fn stop_wallpaper(&self) -> AppResult<()> {
         info!("Stopping wallpaper");
         
         // For Windows, this is essentially the same as clearing the wallpaper
-        self.clear_wallpaper()
+        self.clear_wallpaper().await
     }
 }

@@ -1,5 +1,6 @@
 use crate::core::AppResult;
 use crate::platform::WallpaperManager;
+use async_trait::async_trait;
 use std::path::Path;
 use std::process::Command;
 use std::sync::Arc;
@@ -7,8 +8,9 @@ use std::sync::Arc;
 /// Hyprland-specific wallpaper manager
 pub struct HyprlandWallpaperManager;
 
+#[async_trait]
 impl WallpaperManager for HyprlandWallpaperManager {
-    fn set_static_wallpaper(&self, path: &Path) -> AppResult<()> {
+async fn set_static_wallpaper(&self, path: &Path) -> AppResult<()> {
         // Convert path to string
         let path_str = path.to_string_lossy().to_string();
         
@@ -35,27 +37,27 @@ impl WallpaperManager for HyprlandWallpaperManager {
         Ok(())
     }
     
-    fn set_video_wallpaper(&self, _path: &Path) -> AppResult<()> {
+async fn set_video_wallpaper(&self, _path: &Path) -> AppResult<()> {
         // TODO: Implement video wallpaper support for Hyprland
         Err("Video wallpapers not yet supported for Hyprland".into())
     }
     
-    fn set_web_wallpaper(&self, _url: &str) -> AppResult<()> {
+async fn set_web_wallpaper(&self, _url: &str) -> AppResult<()> {
         // TODO: Implement web wallpaper support for Hyprland
         Err("Web wallpapers not yet supported for Hyprland".into())
     }
     
-    fn set_shader_wallpaper(&self, _path: &Path) -> AppResult<()> {
+async fn set_shader_wallpaper(&self, _path: &Path) -> AppResult<()> {
         // TODO: Implement shader wallpaper support for Hyprland
         Err("Shader wallpapers not yet supported for Hyprland".into())
     }
     
-    fn set_audio_wallpaper(&self, _path: &Path) -> AppResult<()> {
+async fn set_audio_wallpaper(&self, _path: &Path) -> AppResult<()> {
         // TODO: Implement audio wallpaper support for Hyprland
         Err("Audio wallpapers not yet supported for Hyprland".into())
     }
     
-    fn clear_wallpaper(&self) -> AppResult<()> {
+    async fn clear_wallpaper(&self) -> AppResult<()> {
         // Use hyprctl to clear the wallpaper
         let output = Command::new("hyprctl")
             .args(&["hyprpaper", "unload", "all"])
@@ -68,6 +70,11 @@ impl WallpaperManager for HyprlandWallpaperManager {
         }
         
         Ok(())
+    }
+    
+    async fn stop_wallpaper(&self) -> AppResult<()> {
+        // For Hyprland, stopping wallpaper is the same as clearing it
+        self.clear_wallpaper().await
     }
 }
 
