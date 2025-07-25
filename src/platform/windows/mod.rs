@@ -36,14 +36,14 @@ impl WallpaperManager for WindowsWallpaperManager {
                 "-Command",
                 &format!(
                     "Add-Type -TypeDefinition @'
-                    using System;
-                    using System.Runtime.InteropServices;
-                    public class Wallpaper {
-                        [DllImport(\"user32.dll\", CharSet = CharSet.Auto)]
-                        public static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
-                    }
-                    '@;
-                    [Wallpaper]::SystemParametersInfo(0x0014, 0, '{}', 0x01 -bor 0x02)",
+using System;
+using System.Runtime.InteropServices;
+public class Wallpaper {{
+    [DllImport(\"user32.dll\", CharSet = CharSet.Auto)]
+    public static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
+}}
+'@;
+[Wallpaper]::SystemParametersInfo(0x0014, 0, '{}', 0x01 -bor 0x02)"
                     path.to_string_lossy()
                 ),
             ])

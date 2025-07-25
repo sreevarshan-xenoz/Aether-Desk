@@ -98,6 +98,16 @@ pub enum Theme {
     Custom,
 }
 
+impl Default for ThemeConfig {
+    fn default() -> Self {
+        Self {
+            theme: Theme::Dark,
+            accent_color: None,
+            background_color: None,
+        }
+    }
+}
+
 /// Plugin configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginConfig {
@@ -174,6 +184,24 @@ impl Config {
         });
         
         config_dir.push("widgets.json");
+        config_dir
+    }
+    
+    /// Get the plugin directory path
+    pub fn get_plugin_dir(&self) -> PathBuf {
+        let mut config_dir = Self::get_config_dir().unwrap_or_else(|_| {
+            let mut dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+            dir.push("config");
+            dir
+        });
+        
+        config_dir.push("plugins");
+        
+        // Create plugins directory if it doesn't exist
+        if !config_dir.exists() {
+            let _ = std::fs::create_dir_all(&config_dir);
+        }
+        
         config_dir
     }
     

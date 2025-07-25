@@ -50,6 +50,7 @@ dependencies = [
  "serde_json",
  "serial_test",
  "tempfile",
+ "thiserror",
  "tokio",
  "tokio-test",
  "winapi",

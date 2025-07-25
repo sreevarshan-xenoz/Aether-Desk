@@ -1,5 +1,25 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use crate::core::config::WallpaperType;
+
+/// Wallpaper information for scheduler
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WallpaperInfo {
+    /// Wallpaper name
+    pub name: String,
+    /// Wallpaper description
+    pub description: String,
+    /// Wallpaper author
+    pub author: String,
+    /// Wallpaper version
+    pub version: String,
+    /// Wallpaper type
+    pub r#type: WallpaperType,
+    /// Wallpaper file path (for local files)
+    pub path: Option<PathBuf>,
+    /// Wallpaper URL (for web wallpapers)
+    pub url: Option<String>,
+}
 
 /// Wallpaper metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
