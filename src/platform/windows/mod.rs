@@ -23,8 +23,9 @@ impl WindowsWallpaperManager {
     }
 }
 
+#[async_trait]
 impl WallpaperManager for WindowsWallpaperManager {
-    fn set_static_wallpaper(&self, path: &Path) -> AppResult<()> {
+    async fn set_static_wallpaper(&self, path: &std::path::Path) -> AppResult<()> {
         info!("Setting static wallpaper: {}", path.display());
         
         // Convert path to absolute path
