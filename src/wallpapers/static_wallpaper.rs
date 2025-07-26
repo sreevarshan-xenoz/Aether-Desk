@@ -3,6 +3,7 @@ use crate::platform::WallpaperManager;
 use log::{debug, info};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use async_trait::async_trait;
 
 /// Static wallpaper
 pub struct StaticWallpaper {
@@ -23,6 +24,7 @@ impl StaticWallpaper {
     }
 }
 
+#[async_trait]
 impl super::Wallpaper for StaticWallpaper {
     fn get_type(&self) -> WallpaperType {
         WallpaperType::Static
@@ -32,32 +34,32 @@ impl super::Wallpaper for StaticWallpaper {
         Some(&self.path)
     }
     
-    fn start(&self) -> AppResult<()> {
+    async fn start(&self) -> AppResult<()> {
         debug!("Starting static wallpaper: {:?}", self.path);
         
         // Set the wallpaper using the platform-specific manager
-        self.wallpaper_manager.set_static_wallpaper(&self.path)?;
+        self.wallpaper_manager.set_static_wallpaper(&self.path).await?;
         
         info!("Static wallpaper started");
         Ok(())
     }
     
-    fn stop(&self) -> AppResult<()> {
+    async fn stop(&self) -> AppResult<()> {
         debug!("Stopping static wallpaper");
         
         // Stop the wallpaper using the platform-specific manager
-        self.wallpaper_manager.stop_wallpaper()?;
+        self.wallpaper_manager.stop_wallpaper().await?;
         
         info!("Static wallpaper stopped");
         Ok(())
     }
     
-    fn pause(&self) -> AppResult<()> {
+    async fn pause(&self) -> AppResult<()> {
         // Static wallpapers don't need to be paused
         Ok(())
     }
     
-    fn resume(&self) -> AppResult<()> {
+    async fn resume(&self) -> AppResult<()> {
         // Static wallpapers don't need to be resumed
         Ok(())
     }

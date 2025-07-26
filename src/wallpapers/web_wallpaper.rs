@@ -4,6 +4,7 @@ use log::{debug, error, info};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use async_trait::async_trait;
 
 /// Web wallpaper
 pub struct WebWallpaper {
@@ -28,6 +29,7 @@ impl WebWallpaper {
     }
 }
 
+#[async_trait]
 impl super::Wallpaper for WebWallpaper {
     fn get_type(&self) -> WallpaperType {
         WallpaperType::Web
@@ -37,11 +39,11 @@ impl super::Wallpaper for WebWallpaper {
         None
     }
     
-    fn start(&self) -> AppResult<()> {
+    async fn start(&self) -> AppResult<()> {
         debug!("Starting web wallpaper: {}", self.url);
         
         // Set the wallpaper using the platform-specific manager
-        self.wallpaper_manager.set_web_wallpaper(&self.url)?;
+        self.wallpaper_manager.set_web_wallpaper(&self.url).await?;
         
         // Update active state
         let mut is_active = self.is_active.lock().await;
@@ -51,11 +53,11 @@ impl super::Wallpaper for WebWallpaper {
         Ok(())
     }
     
-    fn stop(&self) -> AppResult<()> {
+    async fn stop(&self) -> AppResult<()> {
         debug!("Stopping web wallpaper");
         
         // Stop the wallpaper using the platform-specific manager
-        self.wallpaper_manager.stop_wallpaper()?;
+        self.wallpaper_manager.stop_wallpaper().await?;
         
         // Update active state
         let mut is_active = self.is_active.lock().await;
@@ -65,7 +67,7 @@ impl super::Wallpaper for WebWallpaper {
         Ok(())
     }
     
-    fn pause(&self) -> AppResult<()> {
+    async fn pause(&self) -> AppResult<()> {
         debug!("Pausing web wallpaper");
         
         // TODO: Implement web wallpaper pausing
@@ -73,7 +75,7 @@ impl super::Wallpaper for WebWallpaper {
         Err(AppError::WallpaperError("Web wallpaper pausing not implemented yet".to_string()))
     }
     
-    fn resume(&self) -> AppResult<()> {
+    async fn resume(&self) -> AppResult<()> {
         debug!("Resuming web wallpaper");
         
         // TODO: Implement web wallpaper resuming

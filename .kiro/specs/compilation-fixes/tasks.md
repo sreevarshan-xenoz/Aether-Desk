@@ -14,21 +14,29 @@
   - Test that error handling compiles without variant name conflicts
   - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-- [ ] 2. Convert wallpaper trait system to async
-- [ ] 2.1 Update Wallpaper trait definition to async
+- [-] 2. Convert wallpaper trait system to async
+
+
+
+- [x] 2.1 Update Wallpaper trait definition to async
+
+
   - Modify `src/wallpapers/mod.rs` to make all Wallpaper trait methods async
   - Add `async_trait` annotation to the trait definition
   - Update method signatures to return `AppResult<()>` for async operations
   - _Requirements: 2.1, 2.2, 2.4_
 
-- [ ] 2.2 Update all wallpaper implementations to async
+- [x] 2.2 Update all wallpaper implementations to async
+
+
   - Convert all wallpaper struct implementations to use async methods
   - Add `.await` calls to wallpaper manager method invocations
   - Apply `async_trait` annotation to all implementation blocks
   - Fix any async/sync mismatches in wallpaper operation calls
   - _Requirements: 2.1, 2.2, 2.4_
 
-- [ ] 2.3 Fix async mutex handling in wallpaper system
+- [-] 2.3 Fix async mutex handling in wallpaper system
+
   - Replace `std::sync::Mutex` with `tokio::sync::Mutex` in async contexts
   - Update mutex guard usage to prevent borrow conflicts in async functions
   - Implement proper async mutex locking patterns throughout wallpaper code

@@ -4,6 +4,7 @@ use log::{debug, error, info};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use async_trait::async_trait;
 
 /// Audio wallpaper
 pub struct AudioWallpaper {
@@ -28,6 +29,7 @@ impl AudioWallpaper {
     }
 }
 
+#[async_trait]
 impl super::Wallpaper for AudioWallpaper {
     fn get_type(&self) -> WallpaperType {
         WallpaperType::Audio
@@ -37,11 +39,11 @@ impl super::Wallpaper for AudioWallpaper {
         Some(&self.path)
     }
     
-    fn start(&self) -> AppResult<()> {
+    async fn start(&self) -> AppResult<()> {
         debug!("Starting audio wallpaper: {:?}", self.path);
         
         // Set the wallpaper using the platform-specific manager
-        self.wallpaper_manager.set_audio_wallpaper(&self.path)?;
+        self.wallpaper_manager.set_audio_wallpaper(&self.path).await?;
         
         // Update active state
         let mut is_active = self.is_active.lock().await;
@@ -51,11 +53,11 @@ impl super::Wallpaper for AudioWallpaper {
         Ok(())
     }
     
-    fn stop(&self) -> AppResult<()> {
+    async fn stop(&self) -> AppResult<()> {
         debug!("Stopping audio wallpaper");
         
         // Stop the wallpaper using the platform-specific manager
-        self.wallpaper_manager.stop_wallpaper()?;
+        self.wallpaper_manager.stop_wallpaper().await?;
         
         // Update active state
         let mut is_active = self.is_active.lock().await;
@@ -65,7 +67,7 @@ impl super::Wallpaper for AudioWallpaper {
         Ok(())
     }
     
-    fn pause(&self) -> AppResult<()> {
+    async fn pause(&self) -> AppResult<()> {
         debug!("Pausing audio wallpaper");
         
         // TODO: Implement audio wallpaper pausing
@@ -73,7 +75,7 @@ impl super::Wallpaper for AudioWallpaper {
         Err(AppError::WallpaperError("Audio wallpaper pausing not implemented yet".to_string()))
     }
     
-    fn resume(&self) -> AppResult<()> {
+    async fn resume(&self) -> AppResult<()> {
         debug!("Resuming audio wallpaper");
         
         // TODO: Implement audio wallpaper resuming

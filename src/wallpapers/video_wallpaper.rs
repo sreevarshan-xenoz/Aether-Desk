@@ -4,6 +4,7 @@ use log::{debug, error, info};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use async_trait::async_trait;
 
 /// Video wallpaper
 pub struct VideoWallpaper {
@@ -28,6 +29,7 @@ impl VideoWallpaper {
     }
 }
 
+#[async_trait]
 impl super::Wallpaper for VideoWallpaper {
     fn get_type(&self) -> WallpaperType {
         WallpaperType::Video
@@ -37,11 +39,11 @@ impl super::Wallpaper for VideoWallpaper {
         Some(&self.path)
     }
     
-    fn start(&self) -> AppResult<()> {
+    async fn start(&self) -> AppResult<()> {
         debug!("Starting video wallpaper: {:?}", self.path);
         
         // Set the wallpaper using the platform-specific manager
-        self.wallpaper_manager.set_video_wallpaper(&self.path)?;
+        self.wallpaper_manager.set_video_wallpaper(&self.path).await?;
         
         // Update playing state
         let mut is_playing = self.is_playing.lock().await;
@@ -51,11 +53,11 @@ impl super::Wallpaper for VideoWallpaper {
         Ok(())
     }
     
-    fn stop(&self) -> AppResult<()> {
+    async fn stop(&self) -> AppResult<()> {
         debug!("Stopping video wallpaper");
         
         // Stop the wallpaper using the platform-specific manager
-        self.wallpaper_manager.stop_wallpaper()?;
+        self.wallpaper_manager.stop_wallpaper().await?;
         
         // Update playing state
         let mut is_playing = self.is_playing.lock().await;
@@ -65,7 +67,7 @@ impl super::Wallpaper for VideoWallpaper {
         Ok(())
     }
     
-    fn pause(&self) -> AppResult<()> {
+    async fn pause(&self) -> AppResult<()> {
         debug!("Pausing video wallpaper");
         
         // TODO: Implement video pausing
@@ -73,7 +75,7 @@ impl super::Wallpaper for VideoWallpaper {
         Err(AppError::WallpaperError("Video pausing not implemented yet".to_string()))
     }
     
-    fn resume(&self) -> AppResult<()> {
+    async fn resume(&self) -> AppResult<()> {
         debug!("Resuming video wallpaper");
         
         // TODO: Implement video resuming

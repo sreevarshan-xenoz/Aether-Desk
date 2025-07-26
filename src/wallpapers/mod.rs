@@ -12,8 +12,10 @@ pub use audio_wallpaper::*;
 
 use crate::core::{AppResult, WallpaperType};
 use std::path::Path;
+use async_trait::async_trait;
 
 /// Wallpaper trait
+#[async_trait]
 pub trait Wallpaper {
     /// Get the wallpaper type
     fn get_type(&self) -> WallpaperType;
@@ -22,14 +24,14 @@ pub trait Wallpaper {
     fn get_path(&self) -> Option<&Path>;
     
     /// Start the wallpaper
-    fn start(&self) -> AppResult<()>;
+    async fn start(&self) -> AppResult<()>;
     
     /// Stop the wallpaper
-    fn stop(&self) -> AppResult<()>;
+    async fn stop(&self) -> AppResult<()>;
     
     /// Pause the wallpaper
-    fn pause(&self) -> AppResult<()>;
+    async fn pause(&self) -> AppResult<()>;
     
     /// Resume the wallpaper
-    fn resume(&self) -> AppResult<()>;
+    async fn resume(&self) -> AppResult<()>;
 } 
