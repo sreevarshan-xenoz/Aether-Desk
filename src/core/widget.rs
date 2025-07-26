@@ -1,6 +1,5 @@
-use crate::core::{AppError, AppResult, Config, WallpaperInfo};
-use crate::platform::WallpaperManager;
-use chrono::{DateTime, Datelike, Local};
+use crate::core::{AppError, AppResult, Config};
+use chrono::{Datelike, Local};
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

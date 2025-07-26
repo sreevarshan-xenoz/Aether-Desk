@@ -4,11 +4,11 @@ use crate::wallpapers::{AudioWallpaper, ShaderWallpaper, StaticWallpaper, VideoW
 use chrono::{DateTime, Duration, Local, NaiveTime, Timelike};
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::{Duration as StdDuration, Instant};
+use std::time::Duration as StdDuration;
 
 /// Schedule trigger type
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

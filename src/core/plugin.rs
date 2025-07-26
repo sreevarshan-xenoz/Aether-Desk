@@ -1,7 +1,7 @@
 use crate::core::{AppResult, Config, WallpaperType};
 use crate::platform::WallpaperManager;
 use crate::wallpapers::Wallpaper;
-use log::{debug, error, info};
+use log::info;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
