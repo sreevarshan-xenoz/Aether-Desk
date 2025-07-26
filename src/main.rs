@@ -18,7 +18,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Create wallpaper manager
     let wallpaper_manager = platform::create_wallpaper_manager()?;
-    let wallpaper_manager = Arc::new(wallpaper_manager);
     
     // Create application UI
     let app = AetherDeskApp::new(wallpaper_manager);

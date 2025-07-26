@@ -45,11 +45,11 @@ impl LinuxWallpaperManager {
             return env;
         }
         
-        if let Ok(env) = std::env::var("GNOME_DESKTOP_SESSION_ID") {
+        if let Ok(_env) = std::env::var("GNOME_DESKTOP_SESSION_ID") {
             return "GNOME".to_string();
         }
         
-        if let Ok(env) = std::env::var("KDE_FULL_SESSION") {
+        if let Ok(_env) = std::env::var("KDE_FULL_SESSION") {
             return "KDE".to_string();
         }
         

@@ -711,7 +711,7 @@ impl AetherDeskApp {
                 WidgetType::Calendar => {
                     ui.horizontal(|ui| {
                         ui.label("Show Week Numbers:");
-                        let mut show_week_numbers = config.settings.get("show_week_numbers").unwrap_or(&"false".to_string()).clone();
+                        let show_week_numbers = config.settings.get("show_week_numbers").unwrap_or(&"false".to_string()).clone();
                         if ui.checkbox(&mut (show_week_numbers == "true"), "").changed() {
                             config.settings.insert("show_week_numbers".to_string(), show_week_numbers);
                         }
@@ -807,10 +807,10 @@ impl AetherDeskApp {
         
         egui::Frame::none().fill(bg_color).show(ui, |ui| {
             ui.set_min_size(preview_size);
-            let response = ui.allocate_rect(ui.max_rect(), egui::Sense::hover());
-            let mut drag_id: Option<String> = None;
+            let _response = ui.allocate_rect(ui.max_rect(), egui::Sense::hover());
+            let _drag_id: Option<String> = None;
             for (id, config) in self.widget_manager.get_widget_configs().iter_mut() {
-                let (mut x, mut y) = match config.position {
+                let (x, y) = match config.position {
                     WidgetPosition::Custom(x, y) => (x as f32, y as f32),
                     WidgetPosition::TopLeft => (20.0, 20.0),
                     WidgetPosition::TopRight => (preview_size.x - 180.0, 20.0),
@@ -838,7 +838,7 @@ impl AetherDeskApp {
         });
         // Save updated positions
         for (id, pos) in updated_positions {
-            if let Some(mut config) = self.widget_manager.get_widget_configs().get_mut(&id) {
+            if let Some(config) = self.widget_manager.get_widget_configs().get_mut(&id) {
                 config.position = pos.clone();
                 if let Err(e) = self.widget_manager.update_widget(&id, config.clone()) {
                     error!("Failed to update widget position: {}", e);
@@ -987,7 +987,8 @@ impl AetherDeskApp {
     fn apply_wallpaper(&mut self) {
         // Stop current wallpaper if any
         if let Some(wallpaper) = &self.current_wallpaper {
-            if let Err(e) = wallpaper.stop() {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            if let Err(e) = rt.block_on(wallpaper.stop()) {
                 error!("Failed to stop current wallpaper: {}", e);
             }
         }
@@ -997,7 +998,8 @@ impl AetherDeskApp {
             WallpaperType::Static => {
                 if let Some(path) = &self.selected_wallpaper_path {
                     let wallpaper = StaticWallpaper::new(path, self.wallpaper_manager.clone());
-                    if let Err(e) = wallpaper.start() {
+                    let rt = tokio::runtime::Runtime::new().unwrap();
+                    if let Err(e) = rt.block_on(wallpaper.start()) {
                         error!("Failed to start static wallpaper: {}", e);
                     } else {
                         self.current_wallpaper = Some(Box::new(wallpaper));
@@ -1008,7 +1010,8 @@ impl AetherDeskApp {
             WallpaperType::Video => {
                 if let Some(path) = &self.selected_wallpaper_path {
                     let wallpaper = VideoWallpaper::new(path, self.wallpaper_manager.clone());
-                    if let Err(e) = wallpaper.start() {
+                    let rt = tokio::runtime::Runtime::new().unwrap();
+                    if let Err(e) = rt.block_on(wallpaper.start()) {
                         error!("Failed to start video wallpaper: {}", e);
                     } else {
                         self.current_wallpaper = Some(Box::new(wallpaper));
@@ -1019,7 +1022,8 @@ impl AetherDeskApp {
             WallpaperType::Web => {
                 if !self.selected_web_url.is_empty() {
                     let wallpaper = WebWallpaper::new(&self.selected_web_url, self.wallpaper_manager.clone());
-                    if let Err(e) = wallpaper.start() {
+                    let rt = tokio::runtime::Runtime::new().unwrap();
+                    if let Err(e) = rt.block_on(wallpaper.start()) {
                         error!("Failed to start web wallpaper: {}", e);
                     } else {
                         self.current_wallpaper = Some(Box::new(wallpaper));
@@ -1030,7 +1034,8 @@ impl AetherDeskApp {
             WallpaperType::Shader => {
                 if let Some(path) = &self.selected_wallpaper_path {
                     let wallpaper = ShaderWallpaper::new(path, self.wallpaper_manager.clone());
-                    if let Err(e) = wallpaper.start() {
+                    let rt = tokio::runtime::Runtime::new().unwrap();
+                    if let Err(e) = rt.block_on(wallpaper.start()) {
                         error!("Failed to start shader wallpaper: {}", e);
                     } else {
                         self.current_wallpaper = Some(Box::new(wallpaper));
@@ -1041,7 +1046,8 @@ impl AetherDeskApp {
             WallpaperType::Audio => {
                 if let Some(path) = &self.selected_wallpaper_path {
                     let wallpaper = AudioWallpaper::new(path, self.wallpaper_manager.clone());
-                    if let Err(e) = wallpaper.start() {
+                    let rt = tokio::runtime::Runtime::new().unwrap();
+                    if let Err(e) = rt.block_on(wallpaper.start()) {
                         error!("Failed to start audio wallpaper: {}", e);
                     } else {
                         self.current_wallpaper = Some(Box::new(wallpaper));
@@ -1055,7 +1061,8 @@ impl AetherDeskApp {
     /// Stop the current wallpaper
     fn stop_wallpaper(&mut self) {
         if let Some(wallpaper) = &self.current_wallpaper {
-            if let Err(e) = wallpaper.stop() {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            if let Err(e) = rt.block_on(wallpaper.stop()) {
                 error!("Failed to stop wallpaper: {}", e);
             } else {
                 self.current_wallpaper = None;

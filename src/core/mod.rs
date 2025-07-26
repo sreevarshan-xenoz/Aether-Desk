@@ -6,12 +6,12 @@ pub mod scheduler;
 pub mod types;
 pub mod widget;
 
-pub use config::{Config, WallpaperType, Theme, ThemeConfig};
+pub use config::{Config, WallpaperType, Theme};
 pub use error::AppError;
-pub use plugin::{Plugin, PluginConfig, PluginManager};
+pub use plugin::{PluginManager};
 pub use scheduler::{ScheduleItem, TriggerType, WallpaperScheduler};
 pub use types::WallpaperInfo;
-pub use widget::{Widget, WidgetConfig, WidgetManager, WidgetPosition, WidgetSize, WidgetType};
+pub use widget::{WidgetConfig, WidgetManager, WidgetPosition, WidgetSize, WidgetType};
 
 /// Application result type
 pub type AppResult<T> = Result<T, AppError>; 

@@ -253,7 +253,7 @@ impl WidgetManager {
         
         widgets.clear();
         
-        for (id, config) in configs.iter() {
+        for (_id, config) in configs.iter() {
             if !config.enabled {
                 continue;
             }

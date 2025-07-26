@@ -291,7 +291,8 @@ impl WallpaperScheduler {
     ) {
         // Stop current wallpaper if any
         if let Some(wallpaper) = &mut *current_wallpaper.lock().unwrap() {
-            if let Err(e) = wallpaper.stop() {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            if let Err(e) = rt.block_on(wallpaper.stop()) {
                 error!("Failed to stop current wallpaper: {}", e);
             }
         }
@@ -340,7 +341,8 @@ impl WallpaperScheduler {
             },
         };
         
-        if let Err(e) = wallpaper.start() {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        if let Err(e) = rt.block_on(wallpaper.start()) {
             error!("Failed to start wallpaper: {}", e);
             return;
         }

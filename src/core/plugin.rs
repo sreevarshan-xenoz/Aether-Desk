@@ -113,7 +113,7 @@ impl PluginManager {
     }
     
     /// Load a plugin
-    fn load_plugin(&mut self, plugin_dir: &Path, config: &Config) -> AppResult<()> {
+    fn load_plugin(&mut self, plugin_dir: &Path, _config: &Config) -> AppResult<()> {
         let plugin_name = plugin_dir.file_name().unwrap().to_string_lossy().to_string();
         info!("Loading plugin: {}", plugin_name);
         
