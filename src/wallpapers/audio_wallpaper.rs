@@ -70,7 +70,7 @@ impl super::Wallpaper for AudioWallpaper {
         
         // TODO: Implement audio wallpaper pausing
         error!("Audio wallpaper pausing not implemented yet");
-        Err(AppError::Wallpaper("Audio wallpaper pausing not implemented yet".to_string()))
+        Err(AppError::WallpaperError("Audio wallpaper pausing not implemented yet".to_string()))
     }
     
     fn resume(&self) -> AppResult<()> {
@@ -78,6 +78,6 @@ impl super::Wallpaper for AudioWallpaper {
         
         // TODO: Implement audio wallpaper resuming
         error!("Audio wallpaper resuming not implemented yet");
-        Err(AppError::Wallpaper("Audio wallpaper resuming not implemented yet".to_string()))
+        Err(AppError::WallpaperError("Audio wallpaper resuming not implemented yet".to_string()))
     }
 } 

@@ -70,7 +70,7 @@ impl super::Wallpaper for WebWallpaper {
         
         // TODO: Implement web wallpaper pausing
         error!("Web wallpaper pausing not implemented yet");
-        Err(AppError::Wallpaper("Web wallpaper pausing not implemented yet".to_string()))
+        Err(AppError::WallpaperError("Web wallpaper pausing not implemented yet".to_string()))
     }
     
     fn resume(&self) -> AppResult<()> {
@@ -78,6 +78,6 @@ impl super::Wallpaper for WebWallpaper {
         
         // TODO: Implement web wallpaper resuming
         error!("Web wallpaper resuming not implemented yet");
-        Err(AppError::Wallpaper("Web wallpaper resuming not implemented yet".to_string()))
+        Err(AppError::WallpaperError("Web wallpaper resuming not implemented yet".to_string()))
     }
 } 

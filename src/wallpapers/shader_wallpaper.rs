@@ -70,7 +70,7 @@ impl super::Wallpaper for ShaderWallpaper {
         
         // TODO: Implement shader pausing
         error!("Shader pausing not implemented yet");
-        Err(AppError::Wallpaper("Shader pausing not implemented yet".to_string()))
+        Err(AppError::WallpaperError("Shader pausing not implemented yet".to_string()))
     }
     
     fn resume(&self) -> AppResult<()> {
@@ -78,6 +78,6 @@ impl super::Wallpaper for ShaderWallpaper {
         
         // TODO: Implement shader resuming
         error!("Shader resuming not implemented yet");
-        Err(AppError::Wallpaper("Shader resuming not implemented yet".to_string()))
+        Err(AppError::WallpaperError("Shader resuming not implemented yet".to_string()))
     }
 } 

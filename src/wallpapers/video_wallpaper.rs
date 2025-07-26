@@ -70,7 +70,7 @@ impl super::Wallpaper for VideoWallpaper {
         
         // TODO: Implement video pausing
         error!("Video pausing not implemented yet");
-        Err(AppError::Wallpaper("Video pausing not implemented yet".to_string()))
+        Err(AppError::WallpaperError("Video pausing not implemented yet".to_string()))
     }
     
     fn resume(&self) -> AppResult<()> {
@@ -78,6 +78,6 @@ impl super::Wallpaper for VideoWallpaper {
         
         // TODO: Implement video resuming
         error!("Video resuming not implemented yet");
-        Err(AppError::Wallpaper("Video resuming not implemented yet".to_string()))
+        Err(AppError::WallpaperError("Video resuming not implemented yet".to_string()))
     }
 } 

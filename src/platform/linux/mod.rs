@@ -67,7 +67,7 @@ impl LinuxWallpaperManager {
         
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
-            return Err(AppError::Platform(format!("feh failed: {}", error)));
+            return Err(AppError::PlatformError(format!("feh failed: {}", error)));
         }
         
         Ok(())
@@ -84,7 +84,7 @@ impl LinuxWallpaperManager {
         
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
-            return Err(AppError::Platform(format!("gsettings failed: {}", error)));
+            return Err(AppError::PlatformError(format!("gsettings failed: {}", error)));
         }
         
         Ok(())
@@ -101,7 +101,7 @@ impl LinuxWallpaperManager {
         
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
-            return Err(AppError::Platform(format!("xfconf-query failed: {}", error)));
+            return Err(AppError::PlatformError(format!("xfconf-query failed: {}", error)));
         }
         
         Ok(())
@@ -118,7 +118,7 @@ impl LinuxWallpaperManager {
         
         if !output.status.success() {
             let error = String::from_utf8_lossy(&output.stderr);
-            return Err(AppError::Platform(format!("swww failed: {}", error)));
+            return Err(AppError::PlatformError(format!("swww failed: {}", error)));
         }
         
         Ok(())
