@@ -125,6 +125,7 @@ impl LinuxWallpaperManager {
     }
 }
 
+#[async_trait]
 impl WallpaperManager for LinuxWallpaperManager {
     async fn set_static_wallpaper(&self, path: &Path) -> AppResult<()> {
         info!("Setting static wallpaper: {}", path.display());
@@ -331,9 +332,9 @@ impl WallpaperManager for LinuxWallpaperManager {
         Ok(())
     }
     
-    async fn get_current_wallpaper(&self) -> AppResult<Option<String>> {
+    async fn get_current_wallpaper(&self) -> AppResult<Option<std::path::PathBuf>> {
         let current = self.current_wallpaper.lock().await;
-        Ok(current.clone())
+        Ok(current.as_ref().map(|path| std::path::PathBuf::from(path)))
     }
     
     async fn stop_wallpaper(&self) -> AppResult<()> {

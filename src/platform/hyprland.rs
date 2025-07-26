@@ -76,6 +76,11 @@ async fn set_audio_wallpaper(&self, _path: &Path) -> AppResult<()> {
         // For Hyprland, stopping wallpaper is the same as clearing it
         self.clear_wallpaper().await
     }
+    
+    async fn get_current_wallpaper(&self) -> AppResult<Option<std::path::PathBuf>> {
+        // For initial compilation, return placeholder value
+        Ok(None)
+    }
 }
 
 impl HyprlandWallpaperManager {
