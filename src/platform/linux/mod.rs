@@ -139,7 +139,7 @@ impl WallpaperManager for LinuxWallpaperManager {
         
         // Try using gsettings (GNOME)
         let output = Command::new("gsettings")
-            .args(&["set", "org.gnome.desktop.background", "picture-uri", &format!("file://{}", path.to_string_lossy())])
+            .args(&["set", "org.gnome.desktop.background", "picture-uri", &format!("file://{}", path.to_string_lossy().to_string())])
             .output();
         
         if let Ok(output) = output {
@@ -152,7 +152,7 @@ impl WallpaperManager for LinuxWallpaperManager {
         // Try using feh
         if !success {
             let output = Command::new("feh")
-                .args(&["--bg-fill", &path.to_string_lossy()])
+                .args(&["--bg-fill", &path.to_string_lossy().to_string()])
                 .output();
             
             if let Ok(output) = output {
@@ -166,7 +166,7 @@ impl WallpaperManager for LinuxWallpaperManager {
         // Try using nitrogen
         if !success {
             let output = Command::new("nitrogen")
-                .args(&["--set-zoom-fill", &path.to_string_lossy()])
+                .args(&["--set-zoom-fill", &path.to_string_lossy().to_string()])
                 .output();
             
             if let Ok(output) = output {
@@ -201,7 +201,7 @@ impl WallpaperManager for LinuxWallpaperManager {
                 "--video-wallpaper",
                 "--no-audio",
                 "--loop",
-                &path.to_string_lossy(),
+                &path.to_string_lossy().to_string(),
             ])
             .output()?;
         
@@ -262,7 +262,7 @@ impl WallpaperManager for LinuxWallpaperManager {
         
         // Use a shader player with audio visualization to display the shader as wallpaper
         let output = Command::new("shadertoy")
-            .args(&["--audio", &path.to_string_lossy()])
+            .args(&["--audio", &path.to_string_lossy().to_string()])
             .output()?;
         
         if !output.status.success() {

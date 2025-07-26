@@ -65,7 +65,7 @@ impl WallpaperManager for WindowsWallpaperManager {
                 "--video-wallpaper",
                 "--no-audio",
                 "--loop",
-                &path.to_string_lossy(),
+                &path.to_string_lossy().to_string(),
             ])
             .output()?;
         
@@ -105,7 +105,7 @@ impl WallpaperManager for WindowsWallpaperManager {
         
         // Use a shader player to display the shader as wallpaper
         let output = Command::new("shadertoy")
-            .args(&[&path.to_string_lossy()])
+            .args(&[&path.to_string_lossy().to_string()])
             .output()?;
         
         if !output.status.success() {
@@ -126,7 +126,7 @@ impl WallpaperManager for WindowsWallpaperManager {
         
         // Use a shader player with audio visualization to display the shader as wallpaper
         let output = Command::new("shadertoy")
-            .args(&["--audio", &path.to_string_lossy()])
+            .args(&["--audio", &path.to_string_lossy().to_string()])
             .output()?;
         
         if !output.status.success() {

@@ -117,13 +117,16 @@
   - Ensure all trait methods are in scope where used
   - _Requirements: 6.2_
 
-- [ ] 5.2 Fix type conversion issues
+- [x] 5.2 Fix type conversion issues
+
+
   - Convert `Cow<str>` to `OsStr` using `.to_string()` before command arguments
   - Fix any other type conversion errors in platform-specific command execution
   - Ensure proper type bounds are satisfied for generic parameters
   - _Requirements: 6.3, 8.1, 8.3_
 
-- [ ] 5.3 Clean up unused imports
+- [-] 5.3 Clean up unused imports
+
   - Remove unused import statements to reduce compiler warnings
   - Ensure only necessary imports are included in each module
   - Verify import cleanup doesn't break any functionality
