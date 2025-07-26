@@ -1,4 +1,4 @@
-use crate::core::{AppError, AppResult, WallpaperType};
+use crate::core::{AppResult, WallpaperType};
 use crate::platform::WallpaperManager;
 use log::{debug, info};
 use std::path::{Path, PathBuf};

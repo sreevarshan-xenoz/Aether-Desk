@@ -3,10 +3,10 @@ use chrono::{Datelike, Local};
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::{Duration as StdDuration, Instant};
+use std::time::Duration as StdDuration;
 
 /// Widget type
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

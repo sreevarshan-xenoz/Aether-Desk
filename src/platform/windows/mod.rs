@@ -1,12 +1,10 @@
 use async_trait::async_trait;
-use crate::core::{AppError, AppResult};
+use crate::core::AppResult;
 use crate::platform::WallpaperManager;
-use log::{debug, error, info};
+use log::{error, info};
 use std::path::Path;
 use std::process::Command;
-use std::sync::Arc;
-use tokio::sync::Mutex;
-use winapi::um::winuser::{SystemParametersInfoW, SPI_SETDESKWALLPAPER, SPIF_UPDATEINIFILE};
+
 
 /// Windows-specific wallpaper manager
 pub struct WindowsWallpaperManager;
