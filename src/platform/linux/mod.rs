@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use crate::core::{AppError, AppResult};
 use crate::platform::WallpaperManager;
 use log::{debug, error, info};
@@ -240,7 +241,7 @@ impl WallpaperManager for LinuxWallpaperManager {
         
         // Use a shader player to display the shader as wallpaper
         let output = Command::new("shadertoy")
-            .args(&[&path.to_string_lossy()])
+            .args(&[&path.to_string_lossy().to_string()])
             .output()?;
         
         if !output.status.success() {
