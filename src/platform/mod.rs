@@ -31,6 +31,7 @@ pub trait WallpaperManager: Send + Sync {
     async fn stop_wallpaper(&self) -> AppResult<()>;
     
     /// Get the current wallpaper path
+    #[allow(dead_code)]
     async fn get_current_wallpaper(&self) -> AppResult<Option<std::path::PathBuf>>;
 }
 

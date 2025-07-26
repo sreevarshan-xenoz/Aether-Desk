@@ -19,6 +19,7 @@ pub struct PerformanceMetrics {
 }
 
 /// Performance monitor to track application performance
+#[allow(dead_code)]
 pub struct PerformanceMonitor {
     /// Start time for measuring operations
     operation_start_times: HashMap<String, Instant>,
@@ -40,6 +41,7 @@ impl Default for PerformanceMonitor {
     }
 }
 
+#[allow(dead_code)]
 impl PerformanceMonitor {
     /// Create a new performance monitor
     pub fn new() -> Self {

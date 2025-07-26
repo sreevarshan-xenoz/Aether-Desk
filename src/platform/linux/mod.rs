@@ -16,6 +16,7 @@ pub struct LinuxWallpaperManager {
     desktop_env: String,
 }
 
+#[allow(dead_code)]
 impl LinuxWallpaperManager {
     /// Create a new Linux wallpaper manager
     pub fn new() -> AppResult<Self> {

@@ -226,6 +226,7 @@ impl WallpaperScheduler {
     }
     
     /// Stop the scheduler
+    #[allow(dead_code)]
     pub fn stop(&mut self) -> AppResult<()> {
         let is_running = *self.is_running.lock().unwrap();
         if !is_running {

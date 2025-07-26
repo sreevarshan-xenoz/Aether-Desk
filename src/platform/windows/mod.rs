@@ -16,6 +16,7 @@ impl WindowsWallpaperManager {
     }
     
     /// Initialize the Windows wallpaper manager
+    #[allow(dead_code)]
     pub fn init() -> AppResult<()> {
         info!("Initializing Windows wallpaper manager");
         Ok(())

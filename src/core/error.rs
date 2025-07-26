@@ -2,6 +2,7 @@ use thiserror::Error;
 
 /// Application error
 #[derive(Error, Debug)]
+#[allow(dead_code)]
 pub enum AppError {
     /// Configuration error
     #[error("Configuration error: {0}")]
@@ -49,4 +50,5 @@ impl From<&str> for AppError {
 }
 
 /// Result type for the application
+#[allow(dead_code)]
 pub type AppResult<T> = Result<T, AppError>;

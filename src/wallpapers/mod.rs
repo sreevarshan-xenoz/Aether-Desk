@@ -16,6 +16,7 @@ use async_trait::async_trait;
 
 /// Wallpaper trait
 #[async_trait]
+#[allow(dead_code)]
 pub trait Wallpaper {
     /// Get the wallpaper type
     fn get_type(&self) -> WallpaperType;

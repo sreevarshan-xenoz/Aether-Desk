@@ -91,6 +91,7 @@ pub struct WidgetConfig {
 }
 
 /// Widget trait
+#[allow(dead_code)]
 pub trait Widget: Send + Sync {
     /// Get widget type
     fn get_type(&self) -> WidgetType;
@@ -129,6 +130,7 @@ pub struct WidgetManager {
     is_running: Arc<Mutex<bool>>,
 }
 
+#[allow(dead_code)]
 impl WidgetManager {
     /// Create a new widget manager
     pub fn new() -> Self {
@@ -500,6 +502,7 @@ pub struct WeatherWidget {
 
 /// Weather data
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct WeatherData {
     /// Temperature in Celsius
     temperature: f32,

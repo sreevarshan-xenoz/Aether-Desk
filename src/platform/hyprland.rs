@@ -117,10 +117,12 @@ impl HyprlandWallpaperManager {
     }
 }
 
+#[allow(dead_code)]
 pub fn is_hyprland() -> bool {
     std::env::var("XDG_CURRENT_DESKTOP").map_or(false, |v| v.to_lowercase().contains("hyprland"))
 }
 
+#[allow(dead_code)]
 pub fn create_hyprland_wallpaper_manager() -> Arc<dyn WallpaperManager + Send + Sync> {
     Arc::new(HyprlandWallpaperManager)
 } 

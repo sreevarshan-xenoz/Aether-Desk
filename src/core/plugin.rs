@@ -46,6 +46,7 @@ pub struct PluginConfig {
 }
 
 /// Plugin trait
+#[allow(dead_code)]
 pub trait Plugin: Send + Sync {
     /// Get plugin metadata
     fn metadata(&self) -> &PluginMetadata;
@@ -75,6 +76,7 @@ pub struct PluginManager {
     plugin_configs: HashMap<String, PluginConfig>,
 }
 
+#[allow(dead_code)]
 impl PluginManager {
     /// Create a new plugin manager
     pub fn new(plugin_dir: &Path) -> Self {
