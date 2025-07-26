@@ -108,7 +108,10 @@
 - [-] 5. Resolve import and type management issues
 
 
-- [ ] 5.1 Add missing trait imports
+
+- [x] 5.1 Add missing trait imports
+
+
   - Add `chrono::Datelike` import to modules that use date functionality
   - Import any other missing traits required for method calls
   - Ensure all trait methods are in scope where used
