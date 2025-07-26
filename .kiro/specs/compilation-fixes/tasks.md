@@ -110,6 +110,7 @@
 
 
 
+
 - [x] 5.1 Add missing trait imports
 
 
@@ -134,8 +135,12 @@
   - Verify import cleanup doesn't break any functionality
   - _Requirements: 6.1_
 
-- [ ] 6. Fix memory management and borrowing issues
-- [ ] 6.1 Resolve borrow checker conflicts
+- [-] 6. Fix memory management and borrowing issues
+
+
+
+- [-] 6.1 Resolve borrow checker conflicts
+
   - Use separate scopes for mutex guards to avoid mutable/immutable borrow conflicts
   - Clone values when necessary to prevent lifetime issues
   - Fix any temporary value lifetime problems
