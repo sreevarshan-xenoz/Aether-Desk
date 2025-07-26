@@ -135,7 +135,9 @@
   - Verify import cleanup doesn't break any functionality
   - _Requirements: 6.1_
 
-- [-] 6. Fix memory management and borrowing issues
+- [x] 6. Fix memory management and borrowing issues
+
+
 
 
 
@@ -147,14 +149,17 @@
   - Fix any temporary value lifetime problems
   - _Requirements: 7.1, 7.2_
 
-- [-] 6.2 Implement proper Clone traits where needed
+- [x] 6.2 Implement proper Clone traits where needed
+
 
   - Add Clone implementations or derive Clone for types that need cloning
   - Use explicit variable bindings for complex expressions to manage lifetimes
   - Ensure all cloning operations are appropriate and don't cause performance issues
   - _Requirements: 7.4_
 
-- [ ] 6.3 Fix async mutex deadlock prevention
+- [x] 6.3 Fix async mutex deadlock prevention
+
+
   - Ensure mutex guards are dropped before await points
   - Implement proper async mutex usage patterns to prevent deadlocks
   - Test that async operations don't hold locks across await boundaries
