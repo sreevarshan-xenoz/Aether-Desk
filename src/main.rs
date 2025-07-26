@@ -25,7 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Run application
     let options = eframe::NativeOptions {
-        initial_window_size: Some(egui::vec2(800.0, 600.0)),
+        viewport: egui::ViewportBuilder::default().with_inner_size([800.0, 600.0]),
         ..Default::default()
     };
     

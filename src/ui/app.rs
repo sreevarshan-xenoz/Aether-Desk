@@ -182,9 +182,11 @@ impl AetherDeskApp {
                 ];
                 for (tab, label) in tab_names.iter() {
                     let selected = self.selected_tab == *tab;
-                    let button = egui::SelectableLabel::new(selected, *label)
-                        .text_color(if selected { accent_color } else { ui.visuals().text_color() })
-                        .background_color(if selected { accent_color.linear_multiply(0.1) } else { bg_color });
+                    let button = if selected {
+                        egui::SelectableLabel::new(selected, egui::RichText::new(*label).color(accent_color))
+                    } else {
+                        egui::SelectableLabel::new(selected, *label)
+                    };
                     if ui.add(button).clicked() {
                         self.selected_tab = *tab;
                     }
@@ -602,6 +604,8 @@ impl AetherDeskApp {
                 size: WidgetSize::Medium,
                 settings: HashMap::new(),
                 enabled: true,
+                background_color: None,
+                opacity: None,
             });
             self.editing_widget_id = None;
         }
