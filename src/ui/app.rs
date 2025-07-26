@@ -1,12 +1,12 @@
-use crate::core::{AppResult, Config, Plugin, PluginConfig, PluginManager, ScheduleItem, TriggerType, WallpaperScheduler, Widget, WidgetConfig, WidgetManager, WidgetPosition, WidgetSize, WidgetType, WallpaperType, Theme, ThemeConfig};
+use crate::core::{Config, PluginManager, ScheduleItem, TriggerType, WallpaperScheduler, WidgetConfig, WidgetManager, WidgetPosition, WidgetSize, WidgetType, WallpaperType, Theme};
 use crate::platform::WallpaperManager;
 use crate::wallpapers::{AudioWallpaper, ShaderWallpaper, StaticWallpaper, VideoWallpaper, WebWallpaper, Wallpaper};
 use chrono::{NaiveTime, Timelike};
 use eframe::egui;
-use log::{debug, error, info};
+use log::{error, info};
 use rfd::FileDialog;
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 
 /// Main application UI
