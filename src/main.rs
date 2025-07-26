@@ -9,7 +9,7 @@ use anyhow::Result;
 use log::{error, info};
 use ui::AetherDeskApp;
 use eframe::egui;
-use std::sync::Arc;
+
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize logger
@@ -31,7 +31,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Err(e) = eframe::run_native(
         "Aether-Desk",
         options,
-        Box::new(|cc| Box::new(app))
+        Box::new(|_cc| Box::new(app))
     ) {
         error!("Failed to run application: {}", e);
         return Err(e.into());
