@@ -14,7 +14,9 @@
   - Test that error handling compiles without variant name conflicts
   - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-- [-] 2. Convert wallpaper trait system to async
+- [x] 2. Convert wallpaper trait system to async
+
+
 
 
 
@@ -35,7 +37,8 @@
   - Fix any async/sync mismatches in wallpaper operation calls
   - _Requirements: 2.1, 2.2, 2.4_
 
-- [-] 2.3 Fix async mutex handling in wallpaper system
+- [x] 2.3 Fix async mutex handling in wallpaper system
+
 
   - Replace `std::sync::Mutex` with `tokio::sync::Mutex` in async contexts
   - Update mutex guard usage to prevent borrow conflicts in async functions
