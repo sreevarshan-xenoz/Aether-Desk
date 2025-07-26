@@ -201,7 +201,7 @@ impl PluginManager {
     /// Update plugin settings
     pub fn update_plugin_settings(&mut self, name: &str, settings: HashMap<String, serde_json::Value>) -> AppResult<()> {
         if let Some(config) = self.plugin_configs.get_mut(name) {
-            config.settings = settings;
+            config.settings = settings.clone();
             info!("Updated settings for plugin: {}", name);
         } else {
             return Err(crate::core::AppError::PluginError(format!("Plugin not found: {}", name)).into());

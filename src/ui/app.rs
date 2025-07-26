@@ -861,33 +861,35 @@ impl AetherDeskApp {
         
         // Plugin list
         egui::ScrollArea::vertical().show(ui, |ui| {
-            for (name, plugin) in self.plugin_manager.get_plugins() {
-                ui.collapsing(format!("{} v{}", name, plugin.metadata().version), |ui| {
-                    ui.label(format!("Author: {}", plugin.metadata().author));
-                    ui.label(format!("Description: {}", plugin.metadata().description));
-                    
-                    if let Some(homepage) = &plugin.metadata().homepage {
-                        ui.hyperlink_to("Homepage", homepage);
-                    }
-                    
-                    if let Some(license) = &plugin.metadata().license {
-                        ui.label(format!("License: {}", license));
-                    }
-                    
-                    ui.separator();
-                    
-                    // Plugin settings
-                    ui.heading("Settings");
-                    
-                    let config = plugin.get_settings();
-                    let mut enabled = config.enabled;
-                    
-                    if ui.checkbox(&mut enabled, "Enabled").changed() {
-                        if enabled {
-                            if let Err(e) = self.plugin_manager.enable_plugin(name) {
-                                error!("Failed to enable plugin: {}", e);
-                            }
-                        } else {
+            let plugin_names: Vec<String> = self.plugin_manager.get_plugins().keys().cloned().collect();
+            for name in plugin_names {
+                if let Some(plugin) = self.plugin_manager.get_plugins().get(&name) {
+                    ui.collapsing(format!("{} v{}", name, plugin.metadata().version), |ui| {
+                        ui.label(format!("Author: {}", plugin.metadata().author));
+                        ui.label(format!("Description: {}", plugin.metadata().description));
+                        
+                        if let Some(homepage) = &plugin.metadata().homepage {
+                            ui.hyperlink_to("Homepage", homepage);
+                        }
+                        
+                        if let Some(license) = &plugin.metadata().license {
+                            ui.label(format!("License: {}", license));
+                        }
+                        
+                        ui.separator();
+                        
+                        // Plugin settings
+                        ui.heading("Settings");
+                        
+                        let config = plugin.get_settings();
+                        let mut enabled = config.enabled;
+                        
+                        if ui.checkbox(&mut enabled, "Enabled").changed() {
+                            if enabled {
+                                if let Err(e) = self.plugin_manager.enable_plugin(&name) {
+                                    error!("Failed to enable plugin: {}", e);
+                                }
+                            } else {
                             if let Err(e) = self.plugin_manager.disable_plugin(name) {
                                 error!("Failed to disable plugin: {}", e);
                             }
@@ -924,8 +926,7 @@ impl AetherDeskApp {
         
         // Theme settings
         ui.collapsing("Theme", |ui| {
-            let theme_config = &mut self.config.app.theme;
-            let mut selected_theme = theme_config.theme.clone();
+            let mut selected_theme = self.config.app.theme.theme.clone();
 
             ui.horizontal(|ui| {
                 ui.label("Theme:");
@@ -938,19 +939,21 @@ impl AetherDeskApp {
                     });
             });
 
-            if selected_theme != theme_config.theme {
-                theme_config.theme = selected_theme.clone();
+            if selected_theme != self.config.app.theme.theme {
+                self.config.app.theme.theme = selected_theme.clone();
                 if let Err(e) = self.config.save() {
                     error!("Failed to save config: {}", e);
                 }
             }
 
             if selected_theme == Theme::Custom {
+                let mut accent = self.config.app.theme.accent_color.clone().unwrap_or("#00bcd4".to_string());
+                let mut bg = self.config.app.theme.background_color.clone().unwrap_or("#181818".to_string());
+                
                 ui.horizontal(|ui| {
                     ui.label("Accent Color (hex):");
-                    let mut accent = theme_config.accent_color.clone().unwrap_or("#00bcd4".to_string());
                     if ui.text_edit_singleline(&mut accent).changed() {
-                        theme_config.accent_color = Some(accent);
+                        self.config.app.theme.accent_color = Some(accent.clone());
                         if let Err(e) = self.config.save() {
                             error!("Failed to save config: {}", e);
                         }
@@ -958,9 +961,8 @@ impl AetherDeskApp {
                 });
                 ui.horizontal(|ui| {
                     ui.label("Background Color (hex):");
-                    let mut bg = theme_config.background_color.clone().unwrap_or("#181818".to_string());
                     if ui.text_edit_singleline(&mut bg).changed() {
-                        theme_config.background_color = Some(bg);
+                        self.config.app.theme.background_color = Some(bg.clone());
                         if let Err(e) = self.config.save() {
                             error!("Failed to save config: {}", e);
                         }

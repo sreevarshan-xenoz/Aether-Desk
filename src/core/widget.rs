@@ -156,8 +156,10 @@ impl WidgetManager {
         let widget_configs: HashMap<String, WidgetConfig> = serde_json::from_str(&widgets_content)
             .map_err(|e| AppError::ConfigError(format!("Failed to parse widgets file: {}", e)))?;
         
-        let mut configs = self.widget_configs.lock().unwrap();
-        *configs = widget_configs;
+        {
+            let mut configs = self.widget_configs.lock().unwrap();
+            *configs = widget_configs;
+        }
         
         // Create widgets from configurations
         self.create_widgets_from_configs()?;
@@ -302,8 +304,8 @@ impl WidgetManager {
             let update_interval = StdDuration::from_secs(1); // Update every second
             
             while *is_running.lock().unwrap() {
-                let widgets = widgets.lock().unwrap();
-                for widget in widgets.iter() {
+                let mut widgets = widgets.lock().unwrap();
+                for widget in widgets.iter_mut() {
                     if let Err(e) = widget.update() {
                         error!("Failed to update widget: {}", e);
                     }
@@ -339,8 +341,10 @@ impl WidgetManager {
     
     /// Add a widget
     pub fn add_widget(&mut self, id: String, config: WidgetConfig) -> AppResult<()> {
-        let mut configs = self.widget_configs.lock().unwrap();
-        configs.insert(id, config);
+        {
+            let mut configs = self.widget_configs.lock().unwrap();
+            configs.insert(id, config);
+        }
         
         // Recreate widgets
         self.create_widgets_from_configs()?;
@@ -351,8 +355,10 @@ impl WidgetManager {
     
     /// Remove a widget
     pub fn remove_widget(&mut self, id: &str) -> AppResult<()> {
-        let mut configs = self.widget_configs.lock().unwrap();
-        configs.remove(id);
+        {
+            let mut configs = self.widget_configs.lock().unwrap();
+            configs.remove(id);
+        }
         
         // Recreate widgets
         self.create_widgets_from_configs()?;
@@ -363,8 +369,10 @@ impl WidgetManager {
     
     /// Update a widget
     pub fn update_widget(&mut self, id: &str, config: WidgetConfig) -> AppResult<()> {
-        let mut configs = self.widget_configs.lock().unwrap();
-        configs.insert(id.to_string(), config);
+        {
+            let mut configs = self.widget_configs.lock().unwrap();
+            configs.insert(id.to_string(), config);
+        }
         
         // Recreate widgets
         self.create_widgets_from_configs()?;
@@ -458,8 +466,10 @@ impl Widget for ClockWidget {
     
     fn render(&self, ui: &mut egui::Ui) -> AppResult<()> {
         let now = Local::now();
-        let time_format = self.settings.get("time_format").unwrap_or(&"%H:%M:%S".to_string());
-        let date_format = self.settings.get("date_format").unwrap_or(&"%Y-%m-%d".to_string());
+        let default_time_format = "%H:%M:%S".to_string();
+        let default_date_format = "%Y-%m-%d".to_string();
+        let time_format = self.settings.get("time_format").unwrap_or(&default_time_format);
+        let date_format = self.settings.get("date_format").unwrap_or(&default_date_format);
         
         let time_str = now.format(time_format).to_string();
         let date_str = now.format(date_format).to_string();
