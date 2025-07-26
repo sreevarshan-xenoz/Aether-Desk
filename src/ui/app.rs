@@ -890,14 +890,15 @@ impl AetherDeskApp {
                                     error!("Failed to enable plugin: {}", e);
                                 }
                             } else {
-                            if let Err(e) = self.plugin_manager.disable_plugin(name) {
-                                error!("Failed to disable plugin: {}", e);
+                                if let Err(e) = self.plugin_manager.disable_plugin(&name) {
+                                    error!("Failed to disable plugin: {}", e);
+                                }
                             }
                         }
-                    }
-                    
-                    // TODO: Add more plugin settings
-                });
+                        
+                        // TODO: Add more plugin settings
+                    });
+                }
             }
         });
     }
