@@ -174,7 +174,9 @@
   - Run basic smoke tests to ensure application still functions correctly
   - _Requirements: 1.1, 1.2, 1.3_
 
-- [-] 8. Address remaining dead code warnings
+- [x] 8. Address remaining dead code warnings
+
+
 
 
 
@@ -183,7 +185,10 @@
   - Consider if unused code should be removed or is intended for future use
   - _Requirements: 1.2_
 
-- [ ] 9. Final verification and cleanup
+- [-] 9. Final verification and cleanup
+
+
+
   - Run comprehensive tests to ensure all functionality works as expected
   - Verify that the application starts and displays the UI correctly
   - Test basic wallpaper setting functionality across different types

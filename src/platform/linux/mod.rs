@@ -13,6 +13,7 @@ pub struct LinuxWallpaperManager {
     current_wallpaper: Arc<Mutex<Option<String>>>,
     
     /// Desktop environment
+    #[allow(dead_code)]
     desktop_env: String,
 }
 
