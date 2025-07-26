@@ -861,44 +861,54 @@ impl AetherDeskApp {
         
         // Plugin list
         egui::ScrollArea::vertical().show(ui, |ui| {
-            let plugin_names: Vec<String> = self.plugin_manager.get_plugins().keys().cloned().collect();
-            for name in plugin_names {
-                if let Some(plugin) = self.plugin_manager.get_plugins().get(&name) {
-                    ui.collapsing(format!("{} v{}", name, plugin.metadata().version), |ui| {
-                        ui.label(format!("Author: {}", plugin.metadata().author));
-                        ui.label(format!("Description: {}", plugin.metadata().description));
-                        
-                        if let Some(homepage) = &plugin.metadata().homepage {
-                            ui.hyperlink_to("Homepage", homepage);
-                        }
-                        
-                        if let Some(license) = &plugin.metadata().license {
-                            ui.label(format!("License: {}", license));
-                        }
-                        
-                        ui.separator();
-                        
-                        // Plugin settings
-                        ui.heading("Settings");
-                        
-                        let config = plugin.get_settings();
-                        let mut enabled = config.enabled;
-                        
-                        if ui.checkbox(&mut enabled, "Enabled").changed() {
-                            if enabled {
-                                if let Err(e) = self.plugin_manager.enable_plugin(&name) {
-                                    error!("Failed to enable plugin: {}", e);
-                                }
-                            } else {
-                                if let Err(e) = self.plugin_manager.disable_plugin(&name) {
-                                    error!("Failed to disable plugin: {}", e);
-                                }
+            // Collect plugin info to avoid borrowing conflicts
+            let plugin_info: Vec<(String, String, String, String, Option<String>, Option<String>, bool)> = 
+                self.plugin_manager.get_plugins().iter().map(|(name, plugin)| {
+                    let metadata = plugin.metadata();
+                    let config = plugin.get_settings();
+                    (
+                        name.clone(),
+                        metadata.version.clone(),
+                        metadata.author.clone(),
+                        metadata.description.clone(),
+                        metadata.homepage.clone(),
+                        metadata.license.clone(),
+                        config.enabled
+                    )
+                }).collect();
+            
+            for (name, version, author, description, homepage, license, mut enabled) in plugin_info {
+                ui.collapsing(format!("{} v{}", name, version), |ui| {
+                    ui.label(format!("Author: {}", author));
+                    ui.label(format!("Description: {}", description));
+                    
+                    if let Some(homepage) = &homepage {
+                        ui.hyperlink_to("Homepage", homepage);
+                    }
+                    
+                    if let Some(license) = &license {
+                        ui.label(format!("License: {}", license));
+                    }
+                    
+                    ui.separator();
+                    
+                    // Plugin settings
+                    ui.heading("Settings");
+                    
+                    if ui.checkbox(&mut enabled, "Enabled").changed() {
+                        if enabled {
+                            if let Err(e) = self.plugin_manager.enable_plugin(&name) {
+                                error!("Failed to enable plugin: {}", e);
+                            }
+                        } else {
+                            if let Err(e) = self.plugin_manager.disable_plugin(&name) {
+                                error!("Failed to disable plugin: {}", e);
                             }
                         }
-                        
-                        // TODO: Add more plugin settings
-                    });
-                }
+                    }
+                    
+                    // TODO: Add more plugin settings
+                });
             }
         });
     }

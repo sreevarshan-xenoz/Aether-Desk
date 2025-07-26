@@ -156,6 +156,7 @@ impl WidgetManager {
         let widget_configs: HashMap<String, WidgetConfig> = serde_json::from_str(&widgets_content)
             .map_err(|e| AppError::ConfigError(format!("Failed to parse widgets file: {}", e)))?;
         
+        let config_count = widget_configs.len();
         {
             let mut configs = self.widget_configs.lock().unwrap();
             *configs = widget_configs;
@@ -164,7 +165,7 @@ impl WidgetManager {
         // Create widgets from configurations
         self.create_widgets_from_configs()?;
         
-        info!("Loaded {} widget configurations", configs.len());
+        info!("Loaded {} widget configurations", config_count);
         Ok(())
     }
     
@@ -387,10 +388,10 @@ impl WidgetManager {
         configs.clone()
     }
     
-    /// Get all widgets
-    pub fn get_widgets(&self) -> Vec<Box<dyn Widget>> {
+    /// Get widget count
+    pub fn get_widget_count(&self) -> usize {
         let widgets = self.widgets.lock().unwrap();
-        widgets.clone()
+        widgets.len()
     }
     
     /// Render all widgets

@@ -139,14 +139,16 @@
 
 
 
-- [-] 6.1 Resolve borrow checker conflicts
+- [x] 6.1 Resolve borrow checker conflicts
+
 
   - Use separate scopes for mutex guards to avoid mutable/immutable borrow conflicts
   - Clone values when necessary to prevent lifetime issues
   - Fix any temporary value lifetime problems
   - _Requirements: 7.1, 7.2_
 
-- [ ] 6.2 Implement proper Clone traits where needed
+- [-] 6.2 Implement proper Clone traits where needed
+
   - Add Clone implementations or derive Clone for types that need cloning
   - Use explicit variable bindings for complex expressions to manage lifetimes
   - Ensure all cloning operations are appropriate and don't cause performance issues
