@@ -174,9 +174,51 @@ impl super::Wallpaper for ShaderWallpaper {
     
     async fn resume(&self) -> AppResult<()> {
         debug!("Resuming shader wallpaper");
-        
-        // TODO: Implement shader resuming
-        error!("Shader resuming not implemented yet");
-        Err(AppError::WallpaperError("Shader resuming not implemented yet".to_string()))
+
+        let shader_pid = self.shader_pid.lock().await;
+
+        if let Some(pid) = *shader_pid {
+            #[cfg(target_os = "windows")]
+            {
+                // Restore shader window on Windows
+                let output = Command::new("powershell")
+                    .args(&[
+                        "-Command",
+                        &format!("(New-Object -ComObject WScript.Shell).AppActivate('{}')", pid)
+                    ])
+                    .output()?;
+
+                if output.status.success() {
+                    debug!("Shader resumed successfully");
+                    return Ok(());
+                }
+            }
+
+            #[cfg(target_os = "linux")]
+            {
+                // Send SIGCONT to shader process on Linux
+                let output = Command::new("kill")
+                    .args(&["-CONT", &pid.to_string()])
+                    .output()?;
+
+                if output.status.success() {
+                    debug!("Shader resumed successfully");
+                    return Ok(());
+                }
+            }
+
+            error!("Failed to resume shader");
+            return Err(AppError::WallpaperError("Failed to resume shader".to_string()));
+        } else {
+            // Try to find shader process and resume it
+            drop(shader_pid);
+            if let Ok(Some(pid)) = self.find_shader_process().await {
+                let mut shader_pid = self.shader_pid.lock().await;
+                *shader_pid = Some(pid);
+                return self.resume().await;
+            }
+        }
+
+        Err(AppError::WallpaperError("Shader process not found".to_string()))
     }
 } 
