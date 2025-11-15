@@ -84,14 +84,22 @@ impl super::Wallpaper for VideoWallpaper {
     
     async fn start(&self) -> AppResult<()> {
         debug!("Starting video wallpaper: {:?}", self.path);
-        
+
         // Set the wallpaper using the platform-specific manager
         self.wallpaper_manager.set_video_wallpaper(&self.path).await?;
-        
+
+        // Try to find and store the VLC process ID
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await; // Give VLC time to start
+        if let Ok(Some(pid)) = self.find_vlc_process().await {
+            let mut vlc_pid = self.vlc_pid.lock().await;
+            *vlc_pid = Some(pid);
+            debug!("Found VLC process ID: {}", pid);
+        }
+
         // Update playing state
         let mut is_playing = self.is_playing.lock().await;
         *is_playing = true;
-        
+
         info!("Video wallpaper started");
         Ok(())
     }
