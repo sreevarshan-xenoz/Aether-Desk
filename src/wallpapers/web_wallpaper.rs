@@ -17,6 +17,9 @@ pub struct WebWallpaper {
     
     /// Whether the web wallpaper is active
     is_active: Arc<Mutex<bool>>,
+
+    /// Browser process ID for control
+    browser_pid: Arc<Mutex<Option<u32>>>,
 }
 
 impl WebWallpaper {
