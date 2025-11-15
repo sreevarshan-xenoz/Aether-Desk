@@ -32,6 +32,46 @@ impl AudioWallpaper {
             audio_pid: Arc::new(Mutex::new(None)),
         }
     }
+
+    /// Find audio visualizer process ID for the current audio file
+    async fn find_audio_process(&self) -> AppResult<Option<u32>> {
+        let path_str = self.path.to_string_lossy().to_string();
+
+        #[cfg(target_os = "windows")]
+        {
+            let output = Command::new("powershell")
+                .args(&[
+                    "-Command",
+                    &format!("Get-Process -Name shadertoy,vlc,audacious | Where-Object {{ $_.CommandLine -like '*{}*' }} | Select-Object -ExpandProperty Id", path_str)
+                ])
+                .output()?;
+
+            if output.status.success() {
+                let pid_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                if !pid_str.is_empty() {
+                    return Ok(Some(pid_str.parse::<u32>().map_err(|_| AppError::WallpaperError("Failed to parse audio PID".to_string()))?));
+                }
+            }
+        }
+
+        #[cfg(target_os = "linux")]
+        {
+            for audio_tool in &["shadertoy", "vlc", "audacious", "cava"] {
+                let output = Command::new("pgrep")
+                    .args(&["-f", &format!("{}.*{}", audio_tool, path_str)])
+                    .output()?;
+
+                if output.status.success() {
+                    let pid_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                    if !pid_str.is_empty() {
+                        return Ok(Some(pid_str.parse::<u32>().map_err(|_| AppError::WallpaperError("Failed to parse audio PID".to_string()))?));
+                    }
+                }
+            }
+        }
+
+        Ok(None)
+    }
 }
 
 #[async_trait]
