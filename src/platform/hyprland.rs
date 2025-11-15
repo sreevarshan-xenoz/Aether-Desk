@@ -37,9 +37,28 @@ async fn set_static_wallpaper(&self, path: &Path) -> AppResult<()> {
         Ok(())
     }
     
-async fn set_video_wallpaper(&self, _path: &Path) -> AppResult<()> {
-        // TODO: Implement video wallpaper support for Hyprland
-        Err("Video wallpapers not yet supported for Hyprland".into())
+async fn set_video_wallpaper(&self, path: &Path) -> AppResult<()> {
+        // Convert path to string
+        let path_str = path.to_string_lossy().to_string();
+
+        // Launch VLC in wallpaper mode for video wallpapers
+        let output = Command::new("vlc")
+            .args(&[
+                "--wallpaper-mode",
+                "--no-video-title-show",
+                "--loop",
+                "--no-audio", // Audio can be handled separately if needed
+                &path_str,
+            ])
+            .output()
+            .map_err(|e| format!("Failed to execute VLC: {}", e))?;
+
+        if !output.status.success() {
+            let error = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("Failed to set video wallpaper: {}", error).into());
+        }
+
+        Ok(())
     }
     
 async fn set_web_wallpaper(&self, _url: &str) -> AppResult<()> {
