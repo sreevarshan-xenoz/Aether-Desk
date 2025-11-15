@@ -32,6 +32,46 @@ impl WebWallpaper {
             browser_pid: Arc::new(Mutex::new(None)),
         }
     }
+
+    /// Find browser process ID for the current URL
+    async fn find_browser_process(&self) -> AppResult<Option<u32>> {
+        #[cfg(target_os = "windows")]
+        {
+            // Look for Edge/Chrome processes with the URL
+            let output = Command::new("powershell")
+                .args(&[
+                    "-Command",
+                    &format!("Get-Process -Name msedge,chrome | Where-Object {{ $_.CommandLine -like '*{}*' }} | Select-Object -ExpandProperty Id", self.url)
+                ])
+                .output()?;
+
+            if output.status.success() {
+                let pid_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                if !pid_str.is_empty() {
+                    return Ok(Some(pid_str.parse::<u32>().map_err(|_| AppError::WallpaperError("Failed to parse browser PID".to_string()))?));
+                }
+            }
+        }
+
+        #[cfg(target_os = "linux")]
+        {
+            // Look for Firefox/Chrome processes with the URL
+            for browser in &["firefox", "chrome", "chromium"] {
+                let output = Command::new("pgrep")
+                    .args(&["-f", &format!("{}.*{}", browser, self.url)])
+                    .output()?;
+
+                if output.status.success() {
+                    let pid_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                    if !pid_str.is_empty() {
+                        return Ok(Some(pid_str.parse::<u32>().map_err(|_| AppError::WallpaperError("Failed to parse browser PID".to_string()))?));
+                    }
+                }
+            }
+        }
+
+        Ok(None)
+    }
 }
 
 #[async_trait]
