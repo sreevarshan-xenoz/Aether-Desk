@@ -178,9 +178,63 @@ impl super::Wallpaper for WebWallpaper {
     
     async fn resume(&self) -> AppResult<()> {
         debug!("Resuming web wallpaper");
-        
-        // TODO: Implement web wallpaper resuming
-        error!("Web wallpaper resuming not implemented yet");
-        Err(AppError::WallpaperError("Web wallpaper resuming not implemented yet".to_string()))
+
+        let browser_pid = self.browser_pid.lock().await;
+
+        if let Some(pid) = *browser_pid {
+            #[cfg(target_os = "windows")]
+            {
+                // Restore browser window on Windows
+                let output = Command::new("powershell")
+                    .args(&[
+                        "-Command",
+                        &format!("(New-Object -ComObject WScript.Shell).AppActivate('{}')", pid)
+                    ])
+                    .output()?;
+
+                if output.status.success() {
+                    debug!("Browser restored successfully");
+                    return Ok(());
+                }
+            }
+
+            #[cfg(target_os = "linux")]
+            {
+                // Restore browser window on Linux using wmctrl
+                let output = Command::new("wmctrl")
+                    .args(&["-i", "-r", &pid.to_string(), "-b", "remove", "hidden"])
+                    .output();
+
+                if let Ok(output) = output {
+                    if output.status.success() {
+                        debug!("Browser restored successfully");
+                        return Ok(());
+                    }
+                }
+
+                // Alternative: Send SIGCONT to browser process
+                let output = Command::new("kill")
+                    .args(&["-CONT", &pid.to_string()])
+                    .output()?;
+
+                if output.status.success() {
+                    debug!("Browser resumed successfully");
+                    return Ok(());
+                }
+            }
+
+            error!("Failed to resume browser");
+            return Err(AppError::WallpaperError("Failed to resume web wallpaper".to_string()));
+        } else {
+            // Try to find browser process and resume it
+            drop(browser_pid);
+            if let Ok(Some(pid)) = self.find_browser_process().await {
+                let mut browser_pid = self.browser_pid.lock().await;
+                *browser_pid = Some(pid);
+                return self.resume().await;
+            }
+        }
+
+        Err(AppError::WallpaperError("Browser process not found".to_string()))
     }
 } 
