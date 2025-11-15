@@ -29,7 +29,46 @@ impl VideoWallpaper {
             path: path.as_ref().to_path_buf(),
             wallpaper_manager,
             is_playing: Arc::new(Mutex::new(false)),
+            vlc_pid: Arc::new(Mutex::new(None)),
         }
+    }
+
+    /// Find VLC process ID for the current video
+    async fn find_vlc_process(&self) -> AppResult<Option<u32>> {
+        let path_str = self.path.to_string_lossy().to_string();
+
+        #[cfg(target_os = "windows")]
+        {
+            let output = Command::new("powershell")
+                .args(&[
+                    "-Command",
+                    &format!("Get-Process -Name vlc | Where-Object {{ $_.CommandLine -like '*{}*' }} | Select-Object -ExpandProperty Id", path_str)
+                ])
+                .output()?;
+
+            if output.status.success() {
+                let pid_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                if !pid_str.is_empty() {
+                    return Ok(Some(pid_str.parse::<u32>().map_err(|_| AppError::WallpaperError("Failed to parse VLC PID".to_string()))?));
+                }
+            }
+        }
+
+        #[cfg(target_os = "linux")]
+        {
+            let output = Command::new("pgrep")
+                .args(&["-f", &format!("vlc.*{}", path_str)])
+                .output()?;
+
+            if output.status.success() {
+                let pid_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                if !pid_str.is_empty() {
+                    return Ok(Some(pid_str.parse::<u32>().map_err(|_| AppError::WallpaperError("Failed to parse VLC PID".to_string()))?));
+                }
+            }
+        }
+
+        Ok(None)
     }
 }
 
