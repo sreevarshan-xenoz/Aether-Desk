@@ -110,9 +110,38 @@ async fn set_shader_wallpaper(&self, path: &Path) -> AppResult<()> {
         Ok(())
     }
     
-async fn set_audio_wallpaper(&self, _path: &Path) -> AppResult<()> {
-        // TODO: Implement audio wallpaper support for Hyprland
-        Err("Audio wallpapers not yet supported for Hyprland".into())
+async fn set_audio_wallpaper(&self, path: &Path) -> AppResult<()> {
+        // Convert path to string
+        let path_str = path.to_string_lossy().to_string();
+
+        // Try cava first for audio wallpapers
+        let output = Command::new("cava")
+            .args(&[
+                "--fullscreen",
+                &path_str,
+            ])
+            .output()
+            .map_err(|e| format!("Failed to execute cava: {}", e))?;
+
+        if output.status.success() {
+            return Ok(());
+        }
+
+        // Fallback to shadertoy with audio support
+        let output = Command::new("shadertoy")
+            .args(&[
+                "--audio",
+                &path_str,
+            ])
+            .output()
+            .map_err(|e| format!("Failed to execute shadertoy: {}", e))?;
+
+        if !output.status.success() {
+            let error = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("Failed to set audio wallpaper: {}", error).into());
+        }
+
+        Ok(())
     }
     
     async fn clear_wallpaper(&self) -> AppResult<()> {
