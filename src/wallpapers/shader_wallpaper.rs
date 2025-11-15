@@ -108,14 +108,16 @@ impl super::Wallpaper for ShaderWallpaper {
     
     async fn stop(&self) -> AppResult<()> {
         debug!("Stopping shader wallpaper");
-        
+
         // Stop the wallpaper using the platform-specific manager
         self.wallpaper_manager.stop_wallpaper().await?;
-        
-        // Update active state
+
+        // Clear shader PID and active state
+        let mut shader_pid = self.shader_pid.lock().await;
+        *shader_pid = None;
         let mut is_active = self.is_active.lock().await;
         *is_active = false;
-        
+
         info!("Shader wallpaper stopped");
         Ok(())
     }
