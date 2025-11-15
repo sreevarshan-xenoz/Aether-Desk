@@ -174,9 +174,51 @@ impl super::Wallpaper for AudioWallpaper {
     
     async fn resume(&self) -> AppResult<()> {
         debug!("Resuming audio wallpaper");
-        
-        // TODO: Implement audio wallpaper resuming
-        error!("Audio wallpaper resuming not implemented yet");
-        Err(AppError::WallpaperError("Audio wallpaper resuming not implemented yet".to_string()))
+
+        let audio_pid = self.audio_pid.lock().await;
+
+        if let Some(pid) = *audio_pid {
+            #[cfg(target_os = "windows")]
+            {
+                // Restore audio visualizer window on Windows
+                let output = Command::new("powershell")
+                    .args(&[
+                        "-Command",
+                        &format!("(New-Object -ComObject WScript.Shell).AppActivate('{}')", pid)
+                    ])
+                    .output()?;
+
+                if output.status.success() {
+                    debug!("Audio visualizer resumed successfully");
+                    return Ok(());
+                }
+            }
+
+            #[cfg(target_os = "linux")]
+            {
+                // Send SIGCONT to audio visualizer process on Linux
+                let output = Command::new("kill")
+                    .args(&["-CONT", &pid.to_string()])
+                    .output()?;
+
+                if output.status.success() {
+                    debug!("Audio visualizer resumed successfully");
+                    return Ok(());
+                }
+            }
+
+            error!("Failed to resume audio visualizer");
+            return Err(AppError::WallpaperError("Failed to resume audio wallpaper".to_string()));
+        } else {
+            // Try to find audio visualizer process and resume it
+            drop(audio_pid);
+            if let Ok(Some(pid)) = self.find_audio_process().await {
+                let mut audio_pid = self.audio_pid.lock().await;
+                *audio_pid = Some(pid);
+                return self.resume().await;
+            }
+        }
+
+        Err(AppError::WallpaperError("Audio visualizer process not found".to_string()))
     }
 } 
