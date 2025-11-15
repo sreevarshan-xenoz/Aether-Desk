@@ -61,9 +61,22 @@ async fn set_video_wallpaper(&self, path: &Path) -> AppResult<()> {
         Ok(())
     }
     
-async fn set_web_wallpaper(&self, _url: &str) -> AppResult<()> {
-        // TODO: Implement web wallpaper support for Hyprland
-        Err("Web wallpapers not yet supported for Hyprland".into())
+async fn set_web_wallpaper(&self, url: &str) -> AppResult<()> {
+        // Launch Firefox in kiosk mode for web wallpapers
+        let output = Command::new("firefox")
+            .args(&[
+                "--kiosk",
+                url,
+            ])
+            .output()
+            .map_err(|e| format!("Failed to execute Firefox: {}", e))?;
+
+        if !output.status.success() {
+            let error = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("Failed to set web wallpaper: {}", error).into());
+        }
+
+        Ok(())
     }
     
 async fn set_shader_wallpaper(&self, _path: &Path) -> AppResult<()> {
