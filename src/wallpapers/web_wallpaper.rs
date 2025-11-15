@@ -116,10 +116,64 @@ impl super::Wallpaper for WebWallpaper {
     
     async fn pause(&self) -> AppResult<()> {
         debug!("Pausing web wallpaper");
-        
-        // TODO: Implement web wallpaper pausing
-        error!("Web wallpaper pausing not implemented yet");
-        Err(AppError::WallpaperError("Web wallpaper pausing not implemented yet".to_string()))
+
+        let browser_pid = self.browser_pid.lock().await;
+
+        if let Some(pid) = *browser_pid {
+            #[cfg(target_os = "windows")]
+            {
+                // Minimize browser window on Windows
+                let output = Command::new("powershell")
+                    .args(&[
+                        "-Command",
+                        &format!("(New-Object -ComObject Shell.Application).MinimizeAll(); $wshell = New-Object -ComObject WScript.Shell; $wshell.AppActivate('{}')", pid)
+                    ])
+                    .output()?;
+
+                if output.status.success() {
+                    debug!("Browser minimized successfully");
+                    return Ok(());
+                }
+            }
+
+            #[cfg(target_os = "linux")]
+            {
+                // Minimize browser window on Linux using wmctrl
+                let output = Command::new("wmctrl")
+                    .args(&["-i", "-r", &pid.to_string(), "-b", "add", "hidden"])
+                    .output();
+
+                if let Ok(output) = output {
+                    if output.status.success() {
+                        debug!("Browser minimized successfully");
+                        return Ok(());
+                    }
+                }
+
+                // Alternative: Send SIGSTOP to browser process
+                let output = Command::new("kill")
+                    .args(&["-STOP", &pid.to_string()])
+                    .output()?;
+
+                if output.status.success() {
+                    debug!("Browser paused successfully");
+                    return Ok(());
+                }
+            }
+
+            error!("Failed to pause browser");
+            return Err(AppError::WallpaperError("Failed to pause web wallpaper".to_string()));
+        } else {
+            // Try to find browser process and pause it
+            drop(browser_pid);
+            if let Ok(Some(pid)) = self.find_browser_process().await {
+                let mut browser_pid = self.browser_pid.lock().await;
+                *browser_pid = Some(pid);
+                return self.pause().await;
+            }
+        }
+
+        Err(AppError::WallpaperError("Browser process not found".to_string()))
     }
     
     async fn resume(&self) -> AppResult<()> {
