@@ -122,10 +122,57 @@ impl super::Wallpaper for VideoWallpaper {
     
     async fn pause(&self) -> AppResult<()> {
         debug!("Pausing video wallpaper");
-        
-        // TODO: Implement video pausing
-        error!("Video pausing not implemented yet");
-        Err(AppError::WallpaperError("Video pausing not implemented yet".to_string()))
+
+        let vlc_pid = self.vlc_pid.lock().await;
+
+        if let Some(pid) = *vlc_pid {
+            #[cfg(target_os = "windows")]
+            {
+                // Use PowerShell to send pause signal to VLC
+                let output = Command::new("powershell")
+                    .args(&[
+                        "-Command",
+                        &format!("(New-Object -ComObject WScript.Shell).SendKeys('{{SPACE}}', [IntPtr]::Zero) -ProcessId {}", pid)
+                    ])
+                    .output()?;
+
+                if output.status.success() {
+                    debug!("VLC paused successfully");
+                    return Ok(());
+                }
+            }
+
+            #[cfg(target_os = "linux")]
+            {
+                // Use pkill to send SIGSTOP to VLC
+                let output = Command::new("kill")
+                    .args(&["-STOP", &pid.to_string()])
+                    .output()?;
+
+                if output.status.success() {
+                    debug!("VLC paused successfully");
+                    return Ok(());
+                }
+            }
+
+            let error = String::from_utf8_lossy(&Command::new("vlc")
+                .args(&["--extraintf", "rc", "--rc-host", "localhost:4212"])
+                .output()?
+                .stderr);
+
+            error!("Failed to pause VLC: {}", error);
+            return Err(AppError::WallpaperError("Failed to pause video".to_string()));
+        } else {
+            // Try to find VLC process and pause it
+            drop(vlc_pid);
+            if let Ok(Some(pid)) = self.find_vlc_process().await {
+                let mut vlc_pid = self.vlc_pid.lock().await;
+                *vlc_pid = Some(pid);
+                return self.pause().await;
+            }
+        }
+
+        Err(AppError::WallpaperError("VLC process not found".to_string()))
     }
     
     async fn resume(&self) -> AppResult<()> {
