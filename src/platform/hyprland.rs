@@ -79,9 +79,35 @@ async fn set_web_wallpaper(&self, url: &str) -> AppResult<()> {
         Ok(())
     }
     
-async fn set_shader_wallpaper(&self, _path: &Path) -> AppResult<()> {
-        // TODO: Implement shader wallpaper support for Hyprland
-        Err("Shader wallpapers not yet supported for Hyprland".into())
+async fn set_shader_wallpaper(&self, path: &Path) -> AppResult<()> {
+        // Convert path to string
+        let path_str = path.to_string_lossy().to_string();
+
+        // Try glslviewer first for shader wallpapers
+        let output = Command::new("glslviewer")
+            .args(&[
+                "--fullscreen",
+                &path_str,
+            ])
+            .output()
+            .map_err(|e| format!("Failed to execute glslviewer: {}", e))?;
+
+        if output.status.success() {
+            return Ok(());
+        }
+
+        // Fallback to shadertoy if glslviewer fails
+        let output = Command::new("shadertoy")
+            .args(&[&path_str])
+            .output()
+            .map_err(|e| format!("Failed to execute shadertoy: {}", e))?;
+
+        if !output.status.success() {
+            let error = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("Failed to set shader wallpaper: {}", error).into());
+        }
+
+        Ok(())
     }
     
 async fn set_audio_wallpaper(&self, _path: &Path) -> AppResult<()> {
