@@ -86,14 +86,22 @@ impl super::Wallpaper for ShaderWallpaper {
     
     async fn start(&self) -> AppResult<()> {
         debug!("Starting shader wallpaper: {:?}", self.path);
-        
+
         // Set the wallpaper using the platform-specific manager
         self.wallpaper_manager.set_shader_wallpaper(&self.path).await?;
-        
+
+        // Try to find and store the shader process ID
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await; // Give shader tool time to start
+        if let Ok(Some(pid)) = self.find_shader_process().await {
+            let mut shader_pid = self.shader_pid.lock().await;
+            *shader_pid = Some(pid);
+            debug!("Found shader process ID: {}", pid);
+        }
+
         // Update active state
         let mut is_active = self.is_active.lock().await;
         *is_active = true;
-        
+
         info!("Shader wallpaper started");
         Ok(())
     }
