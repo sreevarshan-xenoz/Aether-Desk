@@ -103,8 +103,10 @@ impl super::Wallpaper for WebWallpaper {
         
         // Stop the wallpaper using the platform-specific manager
         self.wallpaper_manager.stop_wallpaper().await?;
-        
-        // Update active state
+
+        // Clear browser PID and active state
+        let mut browser_pid = self.browser_pid.lock().await;
+        *browser_pid = None;
         let mut is_active = self.is_active.lock().await;
         *is_active = false;
         
