@@ -9,7 +9,7 @@ use async_trait::async_trait;
 
 /// Audio wallpaper
 pub struct AudioWallpaper {
-    /// Shader path
+    /// Audio path
     path: PathBuf,
     
     /// Platform-specific wallpaper manager
