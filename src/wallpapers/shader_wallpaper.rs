@@ -32,6 +32,46 @@ impl ShaderWallpaper {
             shader_pid: Arc::new(Mutex::new(None)),
         }
     }
+
+    /// Find shader process ID for the current shader
+    async fn find_shader_process(&self) -> AppResult<Option<u32>> {
+        let path_str = self.path.to_string_lossy().to_string();
+
+        #[cfg(target_os = "windows")]
+        {
+            let output = Command::new("powershell")
+                .args(&[
+                    "-Command",
+                    &format!("Get-Process -Name shadertoy,glslviewer | Where-Object {{ $_.CommandLine -like '*{}*' }} | Select-Object -ExpandProperty Id", path_str)
+                ])
+                .output()?;
+
+            if output.status.success() {
+                let pid_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                if !pid_str.is_empty() {
+                    return Ok(Some(pid_str.parse::<u32>().map_err(|_| AppError::WallpaperError("Failed to parse shader PID".to_string()))?));
+                }
+            }
+        }
+
+        #[cfg(target_os = "linux")]
+        {
+            for shader_tool in &["shadertoy", "glslviewer"] {
+                let output = Command::new("pgrep")
+                    .args(&["-f", &format!("{}.*{}", shader_tool, path_str)])
+                    .output()?;
+
+                if output.status.success() {
+                    let pid_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                    if !pid_str.is_empty() {
+                        return Ok(Some(pid_str.parse::<u32>().map_err(|_| AppError::WallpaperError("Failed to parse shader PID".to_string()))?));
+                    }
+                }
+            }
+        }
+
+        Ok(None)
+    }
 }
 
 #[async_trait]
