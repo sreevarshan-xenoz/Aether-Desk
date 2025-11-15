@@ -2,6 +2,7 @@ use crate::core::{AppError, AppResult, WallpaperType};
 use crate::platform::WallpaperManager;
 use log::{debug, error, info};
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use async_trait::async_trait;
