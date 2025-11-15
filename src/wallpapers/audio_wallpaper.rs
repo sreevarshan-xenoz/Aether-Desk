@@ -108,14 +108,16 @@ impl super::Wallpaper for AudioWallpaper {
     
     async fn stop(&self) -> AppResult<()> {
         debug!("Stopping audio wallpaper");
-        
+
         // Stop the wallpaper using the platform-specific manager
         self.wallpaper_manager.stop_wallpaper().await?;
-        
-        // Update active state
+
+        // Clear audio PID and active state
+        let mut audio_pid = self.audio_pid.lock().await;
+        *audio_pid = None;
         let mut is_active = self.is_active.lock().await;
         *is_active = false;
-        
+
         info!("Audio wallpaper stopped");
         Ok(())
     }
