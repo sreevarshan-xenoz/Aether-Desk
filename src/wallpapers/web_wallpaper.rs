@@ -29,6 +29,7 @@ impl WebWallpaper {
             url: url.into(),
             wallpaper_manager,
             is_active: Arc::new(Mutex::new(false)),
+            browser_pid: Arc::new(Mutex::new(None)),
         }
     }
 }
