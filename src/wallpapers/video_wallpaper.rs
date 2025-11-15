@@ -106,14 +106,16 @@ impl super::Wallpaper for VideoWallpaper {
     
     async fn stop(&self) -> AppResult<()> {
         debug!("Stopping video wallpaper");
-        
+
         // Stop the wallpaper using the platform-specific manager
         self.wallpaper_manager.stop_wallpaper().await?;
-        
-        // Update playing state
+
+        // Clear VLC PID and playing state
+        let mut vlc_pid = self.vlc_pid.lock().await;
+        *vlc_pid = None;
         let mut is_playing = self.is_playing.lock().await;
         *is_playing = false;
-        
+
         info!("Video wallpaper stopped");
         Ok(())
     }
