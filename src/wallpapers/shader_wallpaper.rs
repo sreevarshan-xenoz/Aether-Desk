@@ -11,12 +11,15 @@ use async_trait::async_trait;
 pub struct ShaderWallpaper {
     /// Shader path
     path: PathBuf,
-    
+
     /// Platform-specific wallpaper manager
     wallpaper_manager: Arc<dyn WallpaperManager + Send + Sync>,
-    
+
     /// Whether the shader is active
     is_active: Arc<Mutex<bool>>,
+
+    /// Shader process ID for control
+    shader_pid: Arc<Mutex<Option<u32>>>,
 }
 
 impl ShaderWallpaper {
