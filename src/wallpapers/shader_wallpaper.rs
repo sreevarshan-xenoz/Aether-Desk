@@ -29,6 +29,7 @@ impl ShaderWallpaper {
             path: path.as_ref().to_path_buf(),
             wallpaper_manager,
             is_active: Arc::new(Mutex::new(false)),
+            shader_pid: Arc::new(Mutex::new(None)),
         }
     }
 }
