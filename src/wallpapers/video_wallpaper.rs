@@ -177,9 +177,51 @@ impl super::Wallpaper for VideoWallpaper {
     
     async fn resume(&self) -> AppResult<()> {
         debug!("Resuming video wallpaper");
-        
-        // TODO: Implement video resuming
-        error!("Video resuming not implemented yet");
-        Err(AppError::WallpaperError("Video resuming not implemented yet".to_string()))
+
+        let vlc_pid = self.vlc_pid.lock().await;
+
+        if let Some(pid) = *vlc_pid {
+            #[cfg(target_os = "windows")]
+            {
+                // Use PowerShell to send resume signal to VLC
+                let output = Command::new("powershell")
+                    .args(&[
+                        "-Command",
+                        &format!("(New-Object -ComObject WScript.Shell).SendKeys('{{SPACE}}', [IntPtr]::Zero) -ProcessId {}", pid)
+                    ])
+                    .output()?;
+
+                if output.status.success() {
+                    debug!("VLC resumed successfully");
+                    return Ok(());
+                }
+            }
+
+            #[cfg(target_os = "linux")]
+            {
+                // Use pkill to send SIGCONT to VLC
+                let output = Command::new("kill")
+                    .args(&["-CONT", &pid.to_string()])
+                    .output()?;
+
+                if output.status.success() {
+                    debug!("VLC resumed successfully");
+                    return Ok(());
+                }
+            }
+
+            error!("Failed to resume VLC");
+            return Err(AppError::WallpaperError("Failed to resume video".to_string()));
+        } else {
+            // Try to find VLC process and resume it
+            drop(vlc_pid);
+            if let Ok(Some(pid)) = self.find_vlc_process().await {
+                let mut vlc_pid = self.vlc_pid.lock().await;
+                *vlc_pid = Some(pid);
+                return self.resume().await;
+            }
+        }
+
+        Err(AppError::WallpaperError("VLC process not found".to_string()))
     }
 } 
