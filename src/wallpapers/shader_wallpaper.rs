@@ -124,10 +124,52 @@ impl super::Wallpaper for ShaderWallpaper {
     
     async fn pause(&self) -> AppResult<()> {
         debug!("Pausing shader wallpaper");
-        
-        // TODO: Implement shader pausing
-        error!("Shader pausing not implemented yet");
-        Err(AppError::WallpaperError("Shader pausing not implemented yet".to_string()))
+
+        let shader_pid = self.shader_pid.lock().await;
+
+        if let Some(pid) = *shader_pid {
+            #[cfg(target_os = "windows")]
+            {
+                // Minimize shader window on Windows
+                let output = Command::new("powershell")
+                    .args(&[
+                        "-Command",
+                        &format!("(New-Object -ComObject WScript.Shell).AppActivate('{}')", pid)
+                    ])
+                    .output()?;
+
+                if output.status.success() {
+                    debug!("Shader paused successfully");
+                    return Ok(());
+                }
+            }
+
+            #[cfg(target_os = "linux")]
+            {
+                // Send SIGSTOP to shader process on Linux
+                let output = Command::new("kill")
+                    .args(&["-STOP", &pid.to_string()])
+                    .output()?;
+
+                if output.status.success() {
+                    debug!("Shader paused successfully");
+                    return Ok(());
+                }
+            }
+
+            error!("Failed to pause shader");
+            return Err(AppError::WallpaperError("Failed to pause shader".to_string()));
+        } else {
+            // Try to find shader process and pause it
+            drop(shader_pid);
+            if let Ok(Some(pid)) = self.find_shader_process().await {
+                let mut shader_pid = self.shader_pid.lock().await;
+                *shader_pid = Some(pid);
+                return self.pause().await;
+            }
+        }
+
+        Err(AppError::WallpaperError("Shader process not found".to_string()))
     }
     
     async fn resume(&self) -> AppResult<()> {
