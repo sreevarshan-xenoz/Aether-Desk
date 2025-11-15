@@ -86,14 +86,22 @@ impl super::Wallpaper for AudioWallpaper {
     
     async fn start(&self) -> AppResult<()> {
         debug!("Starting audio wallpaper: {:?}", self.path);
-        
+
         // Set the wallpaper using the platform-specific manager
         self.wallpaper_manager.set_audio_wallpaper(&self.path).await?;
-        
+
+        // Try to find and store the audio visualizer process ID
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await; // Give audio visualizer time to start
+        if let Ok(Some(pid)) = self.find_audio_process().await {
+            let mut audio_pid = self.audio_pid.lock().await;
+            *audio_pid = Some(pid);
+            debug!("Found audio visualizer process ID: {}", pid);
+        }
+
         // Update active state
         let mut is_active = self.is_active.lock().await;
         *is_active = true;
-        
+
         info!("Audio wallpaper started");
         Ok(())
     }
