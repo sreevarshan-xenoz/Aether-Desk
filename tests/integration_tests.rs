@@ -1,4 +1,4 @@
-use aether_desk::core::{Config, WallpaperType, AppResult};
+use aether_desk::{Config, WallpaperType};
 use std::path::PathBuf;
 use tempfile::TempDir;
 
