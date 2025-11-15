@@ -17,6 +17,9 @@ pub struct AudioWallpaper {
     
     /// Whether the audio wallpaper is active
     is_active: Arc<Mutex<bool>>,
+
+    /// Audio visualizer process ID for control
+    audio_pid: Arc<Mutex<Option<u32>>>,
 }
 
 impl AudioWallpaper {
