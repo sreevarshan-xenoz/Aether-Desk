@@ -11,12 +11,15 @@ use async_trait::async_trait;
 pub struct VideoWallpaper {
     /// Video path
     path: PathBuf,
-    
+
     /// Platform-specific wallpaper manager
     wallpaper_manager: Arc<dyn WallpaperManager + Send + Sync>,
-    
+
     /// Whether the video is playing
     is_playing: Arc<Mutex<bool>>,
+
+    /// VLC process ID for control
+    vlc_pid: Arc<Mutex<Option<u32>>>,
 }
 
 impl VideoWallpaper {
