@@ -1,6 +1,6 @@
 use crate::core::{AppError, AppResult, WallpaperType};
 use crate::platform::WallpaperManager;
-use log::{debug, info, warn};
+use log::{debug, error, info, warn};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::process::{Child, Command};
@@ -46,46 +46,89 @@ impl VideoWallpaper {
     
     /// Check if MPV is available on the system
     fn check_mpv_available() -> bool {
-        match Command::new("mpv").arg("--version").output() {
-            Ok(output) => {
-                if output.status.success() {
-                    debug!("MPV is available");
-                    true
-                } else {
-                    warn!("MPV command failed");
-                    false
+        // Try multiple possible MPV locations
+        let mpv_commands = vec![
+            "mpv",                                    // Standard PATH
+            "mpv.exe",                               // Windows with .exe
+            "C:\\Program Files\\mpv\\mpv.exe",       // Common Windows install location
+            "C:\\Program Files (x86)\\mpv\\mpv.exe", // 32-bit on 64-bit Windows
+        ];
+
+        for mpv_cmd in mpv_commands {
+            match Command::new(mpv_cmd).arg("--version").output() {
+                Ok(output) => {
+                    if output.status.success() {
+                        debug!("MPV is available at: {}", mpv_cmd);
+                        return true;
+                    } else {
+                        debug!("MPV command failed at: {}", mpv_cmd);
+                    }
+                }
+                Err(e) => {
+                    debug!("MPV not found at {}: {}", mpv_cmd, e);
                 }
             }
-            Err(_) => {
-                warn!("MPV not found in PATH");
-                false
+        }
+
+        warn!("MPV not found in any standard locations");
+        false
+    }
+
+    /// Get the MPV command path
+    fn get_mpv_command() -> Result<String, AppError> {
+        let mpv_commands = vec![
+            "mpv",
+            "mpv.exe",
+            "C:\\Program Files\\mpv\\mpv.exe",
+            "C:\\Program Files (x86)\\mpv\\mpv.exe",
+        ];
+
+        for mpv_cmd in mpv_commands {
+            match Command::new(mpv_cmd).arg("--version").output() {
+                Ok(output) => {
+                    if output.status.success() {
+                        debug!("Using MPV at: {}", mpv_cmd);
+                        return Ok(mpv_cmd.to_string());
+                    }
+                }
+                Err(_) => continue,
             }
         }
+
+        Err(AppError::WallpaperError(
+            "MPV is not installed or not available. Please install MPV from https://mpv.io/".to_string()
+        ))
     }
     
     /// Start MPV with desktop integration
     async fn start_mpv(&self) -> Result<Child, AppError> {
-        if !Self::check_mpv_available() {
-            return Err(AppError::WallpaperError(
-                "MPV is not installed or not available in PATH. Please install MPV to use video wallpapers.".to_string()
-            ));
-        }
+        let mpv_command = Self::get_mpv_command()?;
         
-        let mut cmd = Command::new("mpv");
+        let mut cmd = Command::new(&mpv_command);
         
-        // Basic MPV arguments for wallpaper mode
+        // Basic MPV arguments for wallpaper mode (using most compatible options)
         cmd.args(&[
             "--loop-file=inf",           // Loop the video infinitely
             "--no-audio",                // Disable audio output
             "--no-border",               // Remove window border
+            "--osd-level=0",             // Disable on-screen display
+            "--quiet",                   // Reduce log output
+            "--no-config",               // Don't load config files
+        ]);
+
+        // Add optional arguments that might not be supported in all versions
+        let optional_args = vec![
             "--no-input-default-bindings", // Disable input handling
             "--no-input-cursor",         // Hide cursor
-            "--no-osd-bar",              // Disable on-screen display
-            "--no-osd",                  // Disable all OSD
-            "--quiet",                   // Reduce log output
             "--hwdec=auto",              // Enable hardware decoding if available
             "--keepaspect=no",           // Don't maintain aspect ratio
-        ]);
+            "--no-terminal",             // Don't use terminal
+        ];
+
+        // Try to add optional arguments, but don't fail if they're not supported
+        for arg in optional_args {
+            cmd.arg(arg);
+        }
         
         // Platform-specific window integration
         #[cfg(windows)]
@@ -93,18 +136,30 @@ impl VideoWallpaper {
             // Create a window manager and get the window handle
             let mut wm_guard = self.window_manager.lock().await;
             if wm_guard.is_none() {
-                let mut wm = WindowManager::new();
-                let window_hwnd = wm.create_wallpaper_window()?;
-                let hwnd_str = format!("{:?}", window_hwnd.0);
-                
-                // Use the window ID for MPV
-                cmd.args(&[
-                    "--wid", &hwnd_str,      // Embed in our window
-                    "--no-keepaspect-window", // Don't maintain aspect ratio in window
-                ]);
-                
-                *wm_guard = Some(wm);
-                debug!("Created wallpaper window with HWND: {}", hwnd_str);
+                match WindowManager::new().create_wallpaper_window() {
+                    Ok(window_hwnd) => {
+                        let hwnd_str = format!("{}", window_hwnd.0);
+                        
+                        // Use the window ID for MPV
+                        cmd.args(&[
+                            "--wid", &hwnd_str,      // Embed in our window
+                            "--no-keepaspect-window", // Don't maintain aspect ratio in window
+                        ]);
+                        
+                        let wm = WindowManager::new();
+                        *wm_guard = Some(wm);
+                        debug!("Created wallpaper window with HWND: {}", hwnd_str);
+                    }
+                    Err(e) => {
+                        warn!("Failed to create wallpaper window: {}. Using fullscreen mode instead.", e);
+                        // Fallback to fullscreen mode
+                        cmd.args(&[
+                            "--fs",                  // Fullscreen
+                            "--no-keepaspect",       // Don't maintain aspect ratio
+                            "--ontop",               // Keep on top initially
+                        ]);
+                    }
+                }
             } else {
                 return Err(AppError::WallpaperError("Window manager already initialized".to_string()));
             }
@@ -124,13 +179,14 @@ impl VideoWallpaper {
             AppError::WallpaperError("Invalid video path".to_string())
         })?);
         
-        debug!("Starting MPV with command: {:?}", cmd);
+        info!("Starting MPV with command: {:?}", cmd);
         
         let child = cmd.spawn().map_err(|e| {
-            AppError::WallpaperError(format!("Failed to start MPV: {}", e))
+            error!("Failed to start MPV process: {}", e);
+            AppError::WallpaperError(format!("Failed to start MPV: {}. Make sure MPV is installed and accessible.", e))
         })?;
         
-        info!("MPV process started for video: {}", self.path.display());
+        info!("MPV process started successfully for video: {}", self.path.display());
         Ok(child)
     }
 }

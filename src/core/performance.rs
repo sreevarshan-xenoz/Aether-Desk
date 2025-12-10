@@ -2,6 +2,7 @@ use log::{debug, warn};
 use std::time::{Duration, Instant};
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use sysinfo::System;
 
 /// Performance metrics for the application
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,6 +34,12 @@ pub struct PerformanceMonitor {
     frame_count: u32,
     /// Time for FPS calculation
     fps_timer: Instant,
+    /// System information for real metrics
+    system: System,
+    /// Last system update time
+    last_system_update: Instant,
+    /// System update interval
+    system_update_interval: Duration,
 }
 
 impl Default for PerformanceMonitor {
@@ -45,6 +52,10 @@ impl Default for PerformanceMonitor {
 impl PerformanceMonitor {
     /// Create a new performance monitor
     pub fn new() -> Self {
+        let mut system = System::new();
+        system.refresh_cpu_usage();
+        system.refresh_memory();
+        
         Self {
             operation_start_times: HashMap::new(),
             metrics_history: Vec::new(),
@@ -52,6 +63,9 @@ impl PerformanceMonitor {
             last_frame_time: Instant::now(),
             frame_count: 0,
             fps_timer: Instant::now(),
+            system,
+            last_system_update: Instant::now(),
+            system_update_interval: Duration::from_millis(500), // Update every 500ms
         }
     }
 
@@ -81,14 +95,25 @@ impl PerformanceMonitor {
         
         self.frame_count += 1;
         
+        // Update system metrics if enough time has passed
+        if self.last_system_update.elapsed() >= self.system_update_interval {
+            self.system.refresh_cpu_usage();
+            self.system.refresh_memory();
+            self.last_system_update = now;
+        }
+        
         // Calculate FPS every second
         if self.fps_timer.elapsed().as_secs() >= 1 {
             let fps = self.frame_count as f32 / self.fps_timer.elapsed().as_secs_f32();
             
+            // Get real system metrics
+            let cpu_usage = self.system.global_cpu_info().cpu_usage();
+            let memory_usage = (self.system.used_memory() as f64 / self.system.total_memory() as f64) * 100.0;
+            
             // Update metrics
             self.update_metrics(PerformanceMetrics {
-                cpu_usage: self.get_cpu_usage(),
-                memory_usage: self.get_memory_usage(),
+                cpu_usage,
+                memory_usage,
                 frame_time,
                 fps,
                 wallpaper_load_time: 0, // Will be updated separately
@@ -145,18 +170,24 @@ impl PerformanceMonitor {
         }
     }
 
-    /// Get CPU usage (simplified implementation)
+    /// Get CPU usage (real implementation)
     fn get_cpu_usage(&self) -> f32 {
-        // This is a placeholder - you'd want to use a proper system monitoring library
-        // like `sysinfo` for accurate CPU usage
-        0.0
+        // Use cached value from last update
+        if let Some(metrics) = self.get_current_metrics() {
+            metrics.cpu_usage
+        } else {
+            0.0
+        }
     }
 
     /// Get memory usage in MB
     fn get_memory_usage(&self) -> f64 {
-        // This is a placeholder - you'd want to use a proper system monitoring library
-        // In a real implementation, you might use `sysinfo` or similar
-        0.0
+        // Use cached value from last update
+        if let Some(metrics) = self.get_current_metrics() {
+            metrics.memory_usage
+        } else {
+            0.0
+        }
     }
 }
 

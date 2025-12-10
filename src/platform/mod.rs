@@ -1,6 +1,6 @@
-mod windows;
-mod linux;
-mod hyprland;
+pub mod windows;
+pub mod linux;
+pub mod hyprland;
 
 use crate::core::AppResult;
 use std::sync::Arc;
