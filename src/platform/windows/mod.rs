@@ -1,3 +1,6 @@
+pub mod desktop;
+pub mod window_manager;
+
 use async_trait::async_trait;
 use crate::core::AppResult;
 use crate::platform::WallpaperManager;
