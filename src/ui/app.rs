@@ -8,6 +8,7 @@ use rfd::FileDialog;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
+use tokio::runtime::Runtime;
 
 /// Main application UI
 pub struct AetherDeskApp {
@@ -52,6 +53,9 @@ pub struct AetherDeskApp {
     
     /// Editing widget ID
     editing_widget_id: Option<String>,
+    
+    /// Tokio runtime for async operations
+    runtime: Arc<Runtime>,
 }
 
 /// UI tab
@@ -76,6 +80,14 @@ enum Tab {
 impl AetherDeskApp {
     /// Create a new application UI
     pub fn new(wallpaper_manager: Arc<dyn WallpaperManager + Send + Sync>) -> Self {
+        // Create Tokio runtime for async operations
+        let runtime = Arc::new(
+            tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()
+                .expect("Failed to create Tokio runtime")
+        );
+        
         // Load configuration
         let config = Config::load().unwrap_or_else(|e| {
             error!("Failed to load configuration: {}", e);
@@ -132,6 +144,7 @@ impl AetherDeskApp {
             editing_schedule_index: None,
             new_widget: None,
             editing_widget_id: None,
+            runtime,
         }
     }
 }
@@ -985,89 +998,94 @@ impl AetherDeskApp {
     
     /// Apply the selected wallpaper
     fn apply_wallpaper(&mut self) {
+        let rt = Arc::clone(&self.runtime);
+        let wallpaper_type = self.selected_wallpaper_type.clone();
+        let wallpaper_path = self.selected_wallpaper_path.clone();
+        let web_url = self.selected_web_url.clone();
+        let wallpaper_manager = Arc::clone(&self.wallpaper_manager);
+        
         // Stop current wallpaper if any
-        if let Some(wallpaper) = &self.current_wallpaper {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            if let Err(e) = rt.block_on(wallpaper.stop()) {
-                error!("Failed to stop current wallpaper: {}", e);
-            }
+        if let Some(wallpaper) = self.current_wallpaper.take() {
+            let rt_stop = Arc::clone(&rt);
+            rt_stop.spawn(async move {
+                if let Err(e) = wallpaper.stop().await {
+                    error!("Failed to stop current wallpaper: {}", e);
+                }
+            });
         }
         
-        // Create and start new wallpaper
-        match self.selected_wallpaper_type {
-            WallpaperType::Static => {
-                if let Some(path) = &self.selected_wallpaper_path {
-                    let wallpaper = StaticWallpaper::new(path, self.wallpaper_manager.clone());
-                    let rt = tokio::runtime::Runtime::new().unwrap();
-                    if let Err(e) = rt.block_on(wallpaper.start()) {
-                        error!("Failed to start static wallpaper: {}", e);
+        // Spawn async task to create and start new wallpaper
+        rt.spawn(async move {
+            let result = match wallpaper_type {
+                WallpaperType::Static => {
+                    if let Some(path) = wallpaper_path {
+                        let wallpaper = StaticWallpaper::new(&path, wallpaper_manager);
+                        wallpaper.start().await.map(|_| {
+                            info!("Static wallpaper applied successfully");
+                        })
                     } else {
-                        self.current_wallpaper = Some(Box::new(wallpaper));
-                        info!("Static wallpaper applied");
+                        Err(crate::core::AppError::WallpaperError("No path selected for static wallpaper".to_string()))
                     }
-                }
-            },
-            WallpaperType::Video => {
-                if let Some(path) = &self.selected_wallpaper_path {
-                    let wallpaper = VideoWallpaper::new(path, self.wallpaper_manager.clone());
-                    let rt = tokio::runtime::Runtime::new().unwrap();
-                    if let Err(e) = rt.block_on(wallpaper.start()) {
-                        error!("Failed to start video wallpaper: {}", e);
+                },
+                WallpaperType::Video => {
+                    if let Some(path) = wallpaper_path {
+                        let wallpaper = VideoWallpaper::new(&path, wallpaper_manager);
+                        wallpaper.start().await.map(|_| {
+                            info!("Video wallpaper applied successfully");
+                        })
                     } else {
-                        self.current_wallpaper = Some(Box::new(wallpaper));
-                        info!("Video wallpaper applied");
+                        Err(crate::core::AppError::WallpaperError("No path selected for video wallpaper".to_string()))
                     }
-                }
-            },
-            WallpaperType::Web => {
-                if !self.selected_web_url.is_empty() {
-                    let wallpaper = WebWallpaper::new(&self.selected_web_url, self.wallpaper_manager.clone());
-                    let rt = tokio::runtime::Runtime::new().unwrap();
-                    if let Err(e) = rt.block_on(wallpaper.start()) {
-                        error!("Failed to start web wallpaper: {}", e);
+                },
+                WallpaperType::Web => {
+                    if !web_url.is_empty() {
+                        let wallpaper = WebWallpaper::new(&web_url, wallpaper_manager);
+                        wallpaper.start().await.map(|_| {
+                            info!("Web wallpaper applied successfully");
+                        })
                     } else {
-                        self.current_wallpaper = Some(Box::new(wallpaper));
-                        info!("Web wallpaper applied");
+                        Err(crate::core::AppError::WallpaperError("No URL provided for web wallpaper".to_string()))
                     }
-                }
-            },
-            WallpaperType::Shader => {
-                if let Some(path) = &self.selected_wallpaper_path {
-                    let wallpaper = ShaderWallpaper::new(path, self.wallpaper_manager.clone());
-                    let rt = tokio::runtime::Runtime::new().unwrap();
-                    if let Err(e) = rt.block_on(wallpaper.start()) {
-                        error!("Failed to start shader wallpaper: {}", e);
+                },
+                WallpaperType::Shader => {
+                    if let Some(path) = wallpaper_path {
+                        let wallpaper = ShaderWallpaper::new(&path, wallpaper_manager);
+                        wallpaper.start().await.map(|_| {
+                            info!("Shader wallpaper applied successfully");
+                        })
                     } else {
-                        self.current_wallpaper = Some(Box::new(wallpaper));
-                        info!("Shader wallpaper applied");
+                        Err(crate::core::AppError::WallpaperError("No path selected for shader wallpaper".to_string()))
                     }
-                }
-            },
-            WallpaperType::Audio => {
-                if let Some(path) = &self.selected_wallpaper_path {
-                    let wallpaper = AudioWallpaper::new(path, self.wallpaper_manager.clone());
-                    let rt = tokio::runtime::Runtime::new().unwrap();
-                    if let Err(e) = rt.block_on(wallpaper.start()) {
-                        error!("Failed to start audio wallpaper: {}", e);
+                },
+                WallpaperType::Audio => {
+                    if let Some(path) = wallpaper_path {
+                        let wallpaper = AudioWallpaper::new(&path, wallpaper_manager);
+                        wallpaper.start().await.map(|_| {
+                            info!("Audio wallpaper applied successfully");
+                        })
                     } else {
-                        self.current_wallpaper = Some(Box::new(wallpaper));
-                        info!("Audio wallpaper applied");
+                        Err(crate::core::AppError::WallpaperError("No path selected for audio wallpaper".to_string()))
                     }
-                }
-            },
-        }
+                },
+            };
+            
+            if let Err(e) = result {
+                error!("Failed to apply wallpaper: {}", e);
+            }
+        });
     }
     
     /// Stop the current wallpaper
     fn stop_wallpaper(&mut self) {
-        if let Some(wallpaper) = &self.current_wallpaper {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            if let Err(e) = rt.block_on(wallpaper.stop()) {
-                error!("Failed to stop wallpaper: {}", e);
-            } else {
-                self.current_wallpaper = None;
-                info!("Wallpaper stopped");
-            }
+        if let Some(wallpaper) = self.current_wallpaper.take() {
+            let rt = Arc::clone(&self.runtime);
+            rt.spawn(async move {
+                if let Err(e) = wallpaper.stop().await {
+                    error!("Failed to stop wallpaper: {}", e);
+                } else {
+                    info!("Wallpaper stopped successfully");
+                }
+            });
         }
     }
 }

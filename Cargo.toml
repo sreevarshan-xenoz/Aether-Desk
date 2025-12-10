@@ -28,9 +28,17 @@ eframe = { version = "0.24", default-features = false, features = ["default_font
 egui = "0.24"
 rfd = "0.12"
 
+# System monitoring
+sysinfo = "0.30"
+
 # Platform-specific
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["winuser", "shellapi", "shlobj", "combaseapi", "objbase", "oleauto", "wtypesbase"] }
+windows = { version = "0.52", features = [
+    "Win32_Foundation",
+    "Win32_UI_WindowsAndMessaging", 
+    "Win32_Graphics_Gdi"
+]}
 
 # Image processing and media
 image = "0.24"

@@ -49,6 +49,13 @@ impl From<&str> for AppError {
     }
 }
 
+#[cfg(windows)]
+impl From<windows::core::Error> for AppError {
+    fn from(e: windows::core::Error) -> Self {
+        AppError::PlatformError(format!("Windows API error: {}", e))
+    }
+}
+
 /// Result type for the application
 #[allow(dead_code)]
 pub type AppResult<T> = Result<T, AppError>;
