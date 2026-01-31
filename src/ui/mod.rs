@@ -1,4 +1,5 @@
 pub mod app;
+pub mod gallery;
 // pub mod settings; // TODO: Implement settings module
 // pub mod tray;     // TODO: Implement tray module
 

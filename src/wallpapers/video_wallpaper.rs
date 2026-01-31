@@ -10,22 +10,20 @@ use async_trait::async_trait;
 #[cfg(windows)]
 use crate::platform::windows::window_manager::WindowManager;
 
-
-
 /// Video wallpaper
 pub struct VideoWallpaper {
     /// Video path
     path: PathBuf,
-    
+
     /// Platform-specific wallpaper manager
     wallpaper_manager: Arc<dyn WallpaperManager + Send + Sync>,
-    
+
     /// Whether the video is playing
     is_playing: Arc<Mutex<bool>>,
-    
+
     /// MPV process handle
     mpv_process: Arc<Mutex<Option<Child>>>,
-    
+
     /// Window manager for desktop integration (Windows only)
     #[cfg(windows)]
     window_manager: Arc<Mutex<Option<WindowManager>>>,
@@ -103,9 +101,9 @@ impl VideoWallpaper {
     /// Start MPV with desktop integration
     async fn start_mpv(&self) -> Result<Child, AppError> {
         let mpv_command = Self::get_mpv_command()?;
-        
+
         let mut cmd = Command::new(&mpv_command);
-        
+
         // Basic MPV arguments for wallpaper mode (using most compatible options)
         cmd.args(&[
             "--loop-file=inf",           // Loop the video infinitely
@@ -129,7 +127,7 @@ impl VideoWallpaper {
         for arg in optional_args {
             cmd.arg(arg);
         }
-        
+
         // Platform-specific window integration
         #[cfg(windows)]
         {
@@ -139,15 +137,14 @@ impl VideoWallpaper {
                 match WindowManager::new().create_wallpaper_window() {
                     Ok(window_hwnd) => {
                         let hwnd_str = format!("{}", window_hwnd.0);
-                        
+
                         // Use the window ID for MPV
                         cmd.args(&[
                             "--wid", &hwnd_str,      // Embed in our window
                             "--no-keepaspect-window", // Don't maintain aspect ratio in window
                         ]);
-                        
-                        let wm = WindowManager::new();
-                        *wm_guard = Some(wm);
+
+                        *wm_guard = Some(WindowManager::new());
                         debug!("Created wallpaper window with HWND: {}", hwnd_str);
                     }
                     Err(e) => {
@@ -161,10 +158,64 @@ impl VideoWallpaper {
                     }
                 }
             } else {
-                return Err(AppError::WallpaperError("Window manager already initialized".to_string()));
+                // If window manager is already initialized, use the existing window
+                if let Some(ref existing_wm) = wm_guard.as_ref() {
+                    if let Some(window_hwnd) = existing_wm.get_window() {
+                        let hwnd_str = format!("{}", window_hwnd.0);
+                        cmd.args(&[
+                            "--wid", &hwnd_str,      // Embed in our window
+                            "--no-keepaspect-window", // Don't maintain aspect ratio in window
+                        ]);
+                        debug!("Using existing wallpaper window with HWND: {}", hwnd_str);
+                    } else {
+                        warn!("Existing window manager has no window, creating new one");
+                        match WindowManager::new().create_wallpaper_window() {
+                            Ok(window_hwnd) => {
+                                let hwnd_str = format!("{}", window_hwnd.0);
+                                cmd.args(&[
+                                    "--wid", &hwnd_str,      // Embed in our window
+                                    "--no-keepaspect-window", // Don't maintain aspect ratio in window
+                                ]);
+
+                                *wm_guard = Some(WindowManager::new());
+                                debug!("Created new wallpaper window with HWND: {}", hwnd_str);
+                            }
+                            Err(e) => {
+                                warn!("Failed to create wallpaper window: {}. Using fullscreen mode instead.", e);
+                                cmd.args(&[
+                                    "--fs",                  // Fullscreen
+                                    "--no-keepaspect",       // Don't maintain aspect ratio
+                                    "--ontop",               // Keep on top initially
+                                ]);
+                            }
+                        }
+                    }
+                } else {
+                    // Create new window manager
+                    match WindowManager::new().create_wallpaper_window() {
+                        Ok(window_hwnd) => {
+                            let hwnd_str = format!("{}", window_hwnd.0);
+                            cmd.args(&[
+                                "--wid", &hwnd_str,      // Embed in our window
+                                "--no-keepaspect-window", // Don't maintain aspect ratio in window
+                            ]);
+
+                            *wm_guard = Some(WindowManager::new());
+                            debug!("Created wallpaper window with HWND: {}", hwnd_str);
+                        }
+                        Err(e) => {
+                            warn!("Failed to create wallpaper window: {}. Using fullscreen mode instead.", e);
+                            cmd.args(&[
+                                "--fs",                  // Fullscreen
+                                "--no-keepaspect",       // Don't maintain aspect ratio
+                                "--ontop",               // Keep on top initially
+                            ]);
+                        }
+                    }
+                }
             }
         }
-        
+
         #[cfg(not(windows))]
         {
             // On Linux, try to use fullscreen mode
@@ -173,19 +224,19 @@ impl VideoWallpaper {
                 "--no-keepaspect",       // Don't maintain aspect ratio
             ]);
         }
-        
+
         // Add the video file path
         cmd.arg(self.path.to_str().ok_or_else(|| {
             AppError::WallpaperError("Invalid video path".to_string())
         })?);
-        
+
         info!("Starting MPV with command: {:?}", cmd);
-        
+
         let child = cmd.spawn().map_err(|e| {
             error!("Failed to start MPV process: {}", e);
             AppError::WallpaperError(format!("Failed to start MPV: {}. Make sure MPV is installed and accessible.", e))
         })?;
-        
+
         info!("MPV process started successfully for video: {}", self.path.display());
         Ok(child)
     }
@@ -203,40 +254,45 @@ impl super::Wallpaper for VideoWallpaper {
     
     async fn start(&self) -> AppResult<()> {
         debug!("Starting video wallpaper: {:?}", self.path);
-        
+
         // Check if video file exists
         if !self.path.exists() {
             return Err(AppError::WallpaperError(format!(
-                "Video file does not exist: {}", 
+                "Video file does not exist: {}",
                 self.path.display()
             )));
         }
-        
+
         // Stop any existing process
         self.stop().await?;
-        
+
         // Start MPV process
         let child = self.start_mpv().await?;
-        
+
         // Store the process handle
         {
             let mut process = self.mpv_process.lock().await;
             *process = Some(child);
         }
-        
+
         // Update playing state
         {
             let mut is_playing = self.is_playing.lock().await;
             *is_playing = true;
         }
-        
+
+        // Notify the wallpaper manager that the video wallpaper has started
+        if let Err(e) = self.wallpaper_manager.set_video_wallpaper(&self.path).await {
+            warn!("Failed to notify wallpaper manager of video wallpaper: {}", e);
+        }
+
         info!("Video wallpaper started successfully: {}", self.path.display());
         Ok(())
     }
     
     async fn stop(&self) -> AppResult<()> {
         debug!("Stopping video wallpaper");
-        
+
         // Kill MPV process if running
         {
             let mut process = self.mpv_process.lock().await;
@@ -255,25 +311,29 @@ impl super::Wallpaper for VideoWallpaper {
                 }
             }
         }
-        
+
         // Clean up window manager on Windows
         #[cfg(windows)]
         {
             let mut wm_guard = self.window_manager.lock().await;
-            if let Some(wm) = wm_guard.take() {
+            if let Some(ref wm) = wm_guard.as_ref() {
                 if let Err(e) = wm.hide_window() {
                     warn!("Failed to hide wallpaper window: {}", e);
                 }
-                debug!("Window manager cleaned up");
             }
         }
-        
+
         // Update playing state
         {
             let mut is_playing = self.is_playing.lock().await;
             *is_playing = false;
         }
-        
+
+        // Notify the wallpaper manager that the video wallpaper has stopped
+        if let Err(e) = self.wallpaper_manager.stop_wallpaper().await {
+            warn!("Failed to notify wallpaper manager of stop: {}", e);
+        }
+
         info!("Video wallpaper stopped");
         Ok(())
     }

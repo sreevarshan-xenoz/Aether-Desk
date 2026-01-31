@@ -9,25 +9,29 @@ use anyhow::Result;
 use log::{error, info};
 use ui::AetherDeskApp;
 use eframe::egui;
+use core::ResourceManager;
 
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize logger
     env_logger::init();
     info!("Starting Aether-Desk");
-    
+
+    // Create resource manager
+    let resource_manager = ResourceManager::default();
+
     // Create wallpaper manager
     let wallpaper_manager = platform::create_wallpaper_manager()?;
-    
+
     // Create application UI
-    let app = AetherDeskApp::new(wallpaper_manager);
-    
+    let app = AetherDeskApp::new(wallpaper_manager, resource_manager);
+
     // Run application
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default().with_inner_size([800.0, 600.0]),
         ..Default::default()
     };
-    
+
     if let Err(e) = eframe::run_native(
         "Aether-Desk",
         options,
@@ -36,7 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         error!("Failed to run application: {}", e);
         return Err(e.into());
     }
-    
+
     info!("Aether-Desk stopped");
     Ok(())
 }

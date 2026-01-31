@@ -1,5 +1,6 @@
-use crate::core::{Config, PluginManager, ScheduleItem, TriggerType, WallpaperScheduler, WidgetConfig, WidgetManager, WidgetPosition, WidgetSize, WidgetType, WallpaperType, Theme};
+use crate::core::{Config, PluginManager, ResourceManager, ResourceLimits, ResourceUsage, ScheduleItem, TriggerType, WallpaperScheduler, WidgetConfig, WidgetManager, WidgetPosition, WidgetSize, WidgetType, WallpaperType, Theme};
 use crate::platform::WallpaperManager;
+use crate::ui::gallery::GalleryView;
 use crate::wallpapers::{AudioWallpaper, ShaderWallpaper, StaticWallpaper, VideoWallpaper, WebWallpaper, Wallpaper};
 use chrono::{NaiveTime, Timelike};
 use eframe::egui;
@@ -14,48 +15,54 @@ use tokio::runtime::Runtime;
 pub struct AetherDeskApp {
     /// Application configuration
     config: Config,
-    
+
     /// Platform-specific wallpaper manager
     wallpaper_manager: Arc<dyn WallpaperManager + Send + Sync>,
-    
+
+    /// Resource manager for tracking resource usage
+    resource_manager: ResourceManager,
+
     /// Plugin manager
     plugin_manager: PluginManager,
-    
+
     /// Wallpaper scheduler
     scheduler: WallpaperScheduler,
-    
+
     /// Widget manager
     widget_manager: WidgetManager,
-    
+
     /// Current wallpaper
     current_wallpaper: Option<Box<dyn Wallpaper + Send + Sync>>,
-    
+
     /// Selected wallpaper type
     selected_wallpaper_type: WallpaperType,
-    
+
     /// Selected wallpaper path
     selected_wallpaper_path: Option<PathBuf>,
-    
+
     /// Selected web URL
     selected_web_url: String,
-    
+
     /// Selected tab
     selected_tab: Tab,
-    
+
     /// New schedule item
     new_schedule_item: Option<ScheduleItem>,
-    
+
     /// Editing schedule item index
     editing_schedule_index: Option<usize>,
-    
+
     /// New widget
     new_widget: Option<WidgetConfig>,
-    
+
     /// Editing widget ID
     editing_widget_id: Option<String>,
-    
+
     /// Tokio runtime for async operations
     runtime: Arc<Runtime>,
+
+    /// Gallery view for browsing wallpapers
+    gallery_view: GalleryView,
 }
 
 /// UI tab
@@ -63,23 +70,26 @@ pub struct AetherDeskApp {
 enum Tab {
     /// Wallpaper tab
     Wallpaper,
-    
+
+    /// Gallery tab
+    Gallery,
+
     /// Scheduler tab
     Scheduler,
-    
+
     /// Widgets tab
     Widgets,
-    
+
     /// Plugins tab
     Plugins,
-    
+
     /// Settings tab
     Settings,
 }
 
 impl AetherDeskApp {
     /// Create a new application UI
-    pub fn new(wallpaper_manager: Arc<dyn WallpaperManager + Send + Sync>) -> Self {
+    pub fn new(wallpaper_manager: Arc<dyn WallpaperManager + Send + Sync>, resource_manager: ResourceManager) -> Self {
         // Create Tokio runtime for async operations
         let runtime = Arc::new(
             tokio::runtime::Builder::new_multi_thread()
@@ -87,51 +97,55 @@ impl AetherDeskApp {
                 .build()
                 .expect("Failed to create Tokio runtime")
         );
-        
+
         // Load configuration
         let config = Config::load().unwrap_or_else(|e| {
             error!("Failed to load configuration: {}", e);
             Config::default()
         });
-        
+
         // Create plugin manager
         let plugin_dir = config.get_plugin_dir();
         let mut plugin_manager = PluginManager::new(&plugin_dir);
-        
+
         // Load plugins
         if let Err(e) = plugin_manager.load_plugins(&config) {
             error!("Failed to load plugins: {}", e);
         }
-        
+
         // Create scheduler
         let mut scheduler = WallpaperScheduler::new(wallpaper_manager.clone());
-        
+
         // Load schedule
         if let Err(e) = scheduler.load_schedule(&config) {
             error!("Failed to load schedule: {}", e);
         }
-        
+
         // Start scheduler
         if let Err(e) = scheduler.start() {
             error!("Failed to start scheduler: {}", e);
         }
-        
+
         // Create widget manager
         let mut widget_manager = WidgetManager::new();
-        
+
         // Load widgets
         if let Err(e) = widget_manager.load_widgets(&config) {
             error!("Failed to load widgets: {}", e);
         }
-        
+
         // Start widget manager
         if let Err(e) = widget_manager.start() {
             error!("Failed to start widget manager: {}", e);
         }
-        
+
+        // Create gallery view
+        let gallery_view = GalleryView::new(wallpaper_manager.clone());
+
         Self {
             config,
             wallpaper_manager,
+            resource_manager,
             plugin_manager,
             scheduler,
             widget_manager,
@@ -145,6 +159,7 @@ impl AetherDeskApp {
             new_widget: None,
             editing_widget_id: None,
             runtime,
+            gallery_view,
         }
     }
 }
@@ -188,6 +203,7 @@ impl AetherDeskApp {
             ui.horizontal(|ui| {
                 let tab_names = [
                     (Tab::Wallpaper, "Wallpaper"),
+                    (Tab::Gallery, "Gallery"),
                     (Tab::Scheduler, "Scheduler"),
                     (Tab::Widgets, "Widgets"),
                     (Tab::Plugins, "Plugins"),
@@ -211,6 +227,7 @@ impl AetherDeskApp {
             // Tab content
             match self.selected_tab {
                 Tab::Wallpaper => self.show_wallpaper_tab(ui),
+                Tab::Gallery => self.show_gallery_tab(ui),
                 Tab::Scheduler => self.show_scheduler_tab(ui),
                 Tab::Widgets => self.show_widgets_tab(ui),
                 Tab::Plugins => self.show_plugins_tab(ui),
@@ -296,7 +313,12 @@ impl AetherDeskApp {
             self.stop_wallpaper();
         }
     }
-    
+
+    /// Show gallery tab
+    fn show_gallery_tab(&mut self, ui: &mut egui::Ui) {
+        self.gallery_view.show(ui);
+    }
+
     /// Show scheduler tab
     fn show_scheduler_tab(&mut self, ui: &mut egui::Ui) {
         ui.heading("Wallpaper Scheduler");
@@ -929,25 +951,63 @@ impl AetherDeskApp {
     /// Show settings tab
     fn show_settings_tab(&mut self, ui: &mut egui::Ui) {
         ui.heading("Settings");
-        
+
         // General settings
         ui.collapsing("General", |ui| {
             // TODO: Add general settings
             ui.label("General settings will be available in a future release.");
         });
-        
+
         // Wallpaper settings
         ui.collapsing("Wallpaper", |ui| {
             // TODO: Add wallpaper settings
             ui.label("Wallpaper settings will be available in a future release.");
         });
-        
+
         // Plugin settings
         ui.collapsing("Plugins", |ui| {
             // TODO: Add plugin settings
             ui.label("Plugin settings will be available in a future release.");
         });
-        
+
+        // Resource monitoring
+        ui.collapsing("Resource Monitoring", |ui| {
+            ui.heading("Resource Usage");
+
+            // Get current resource usage
+            let usage = self.runtime.block_on(async {
+                self.resource_manager.get_usage().await
+            });
+
+            let (memory_util, gpu_util, cpu_util) = self.runtime.block_on(async {
+                self.resource_manager.get_utilization().await
+            });
+
+            // Display resource usage
+            ui.label(format!("Memory Used: {:.2} MB", usage.memory_used as f64 / (1024.0 * 1024.0)));
+            ui.add(egui::ProgressBar::new(memory_util / 100.0).text(format!("{:.1}%", memory_util)));
+
+            ui.label(format!("GPU Memory Used: {:.2} MB", usage.gpu_memory_used as f64 / (1024.0 * 1024.0)));
+            ui.add(egui::ProgressBar::new(gpu_util / 100.0).text(format!("{:.1}%", gpu_util)));
+
+            ui.label(format!("CPU Usage: {:.1}%", usage.cpu_usage));
+            ui.add(egui::ProgressBar::new(cpu_util / 100.0).text(format!("{:.1}%", cpu_util)));
+
+            ui.label(format!("Active Processes: {}", usage.active_processes));
+
+            ui.separator();
+
+            // Resource limits
+            ui.heading("Resource Limits");
+            ui.label("These limits help prevent excessive resource consumption");
+
+            // Note: In a real implementation, we would allow users to adjust these values
+            ui.label("Memory Limit: 512 MB");
+            ui.label("GPU Memory Limit: 256 MB");
+            ui.label("CPU Limit: 80%");
+            ui.label("Process Limit: 10");
+        });
+
         // Theme settings
         ui.collapsing("Theme", |ui| {
             let mut selected_theme = self.config.app.theme.theme.clone();
@@ -973,7 +1033,7 @@ impl AetherDeskApp {
             if selected_theme == Theme::Custom {
                 let mut accent = self.config.app.theme.accent_color.clone().unwrap_or("#00bcd4".to_string());
                 let mut bg = self.config.app.theme.background_color.clone().unwrap_or("#181818".to_string());
-                
+
                 ui.horizontal(|ui| {
                     ui.label("Accent Color (hex):");
                     if ui.text_edit_singleline(&mut accent).changed() {
